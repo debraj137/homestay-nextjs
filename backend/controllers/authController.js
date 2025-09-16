@@ -33,12 +33,13 @@ exports.register = async (req, res) => {
     const emailOtp = generateOtp();
     const mobileOtp = generateOtp();
     const expiry = new Date(Date.now() + 10 * 60 * 1000);
-
+    const role = req.body.role || 'user';
     const user = new User({
       name,
       email,
       password: hashedPassword,
       mobileNumber,
+      role,
       emailOtp,
       emailOtpExpiry: expiry,
       mobileOtp,
@@ -69,35 +70,80 @@ exports.register = async (req, res) => {
 };
 
 // VERIFY OTP
+// exports.verifyOtp = async (req, res) => {
+//   console.log("Verifying OTP with data:", req.body);
+//   try {
+//     const { email, emailOtp, mobileOtp } = req.body;
+//     const user = await User.findOne({ email });
+//     if (!user) return res.status(400).json({ message: 'User not found' });
+
+//     const now = new Date();
+
+//     if (user.emailOtp === emailOtp && user.emailOtpExpiry > now) {
+//       user.emailVerified = true;
+//       user.emailOtp = null;
+//       user.emailOtpExpiry = null;
+//     } else {
+//       return res.status(400).json({ message: 'Invalid or expired email OTP' });
+//     }
+
+//     if (user.mobileOtp === mobileOtp && user.mobileOtpExpiry > now) {
+//       user.mobileVerified = true;
+//       user.mobileOtp = null;
+//       user.mobileOtpExpiry = null;
+//     } else {
+//       return res.status(400).json({ message: 'Invalid or expired mobile OTP' });
+//     }
+
+//     await user.save();
+//     res.json({ message: 'Email & Mobile verified successfully' });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: 'Error verifying OTP' });
+//   }
+// };
+
 exports.verifyOtp = async (req, res) => {
   try {
     const { email, emailOtp, mobileOtp } = req.body;
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'User not found' });
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
     const now = new Date();
-
-    if (user.emailOtp === emailOtp && user.emailOtpExpiry > now) {
-      user.emailVerified = true;
-      user.emailOtp = null;
-      user.emailOtpExpiry = null;
-    } else {
+    if (!user.emailOtp || user.emailOtp !== emailOtp || user.emailOtpExpiry < now) {
       return res.status(400).json({ message: 'Invalid or expired email OTP' });
     }
-
-    if (user.mobileOtp === mobileOtp && user.mobileOtpExpiry > now) {
-      user.mobileVerified = true;
-      user.mobileOtp = null;
-      user.mobileOtpExpiry = null;
-    } else {
+    if (!user.mobileOtp || user.mobileOtp !== mobileOtp || user.mobileOtpExpiry < now) {
       return res.status(400).json({ message: 'Invalid or expired mobile OTP' });
     }
 
+    user.emailVerified = true;
+    user.mobileVerified = true;
+    user.emailOtp = null;
+    user.mobileOtp = null;
+    user.emailOtpExpiry = null;
+    user.mobileOtpExpiry = null;
     await user.save();
-    res.json({ message: 'Email & Mobile verified successfully' });
+
+    // 🔹 generate JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: 'OTP verified successfully',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error verifying OTP' });
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -174,3 +220,24 @@ exports.login = async (req, res) => {
 };
 
 
+// Upgrade user role to "owner"
+exports.becomeOwner = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (user.role === 'owner') {
+      return res.json({ message: 'You are already an owner' });
+    }
+
+    user.role = 'owner';
+    await user.save();
+
+    res.json({ message: 'You are now registered as an owner', user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error updating role' });
+  }
+};

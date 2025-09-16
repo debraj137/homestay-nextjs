@@ -107,9 +107,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
+import { useAuth } from '@/context/AuthContext';
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -122,7 +123,7 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e) {     
     e.preventDefault();
     setMessage('');
 
@@ -137,8 +138,9 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.message);
 
       setMessage('Login successful ✅');
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // localStorage.setItem('token', data.token);
+      // localStorage.setItem('user', JSON.stringify(data.user));
+      login(data.user, data.token);
       window.dispatchEvent(new Event("loginStatusChanged"));
       router.push('/'); // redirect after login
     } catch (err) {
