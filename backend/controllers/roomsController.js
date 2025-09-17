@@ -65,15 +65,4 @@ exports.updateRoom = async (req, res) => {
   }
 };
 
-// ✅ Get only approved rooms for an owner
-exports.getApprovedRoomsByOwner = async (req, res) => {
-  try {
-    const rooms = await Room.find({
-      ownerId: req.params.ownerId,
-      isApproved: true,
-    });
-    res.json(rooms);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch approved rooms' });
-  }
-};
+

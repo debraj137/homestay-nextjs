@@ -11,5 +11,6 @@ router.post('/', roomsController.createRoom);
 router.get('/:id', roomsController.getRoom);
 router.put('/:id', roomsController.updateRoom);
 // ✅ Route for approved rooms by owner
-router.get('/owner/:ownerId/approved', roomsController.getApprovedRoomsByOwner);
+// router.get('/owner/:ownerId/approved', roomsController.getApprovedRoomsByOwner);
+// router.patch('/:roomId/category', roomsController.updateRoomCategory);
 module.exports = router;
