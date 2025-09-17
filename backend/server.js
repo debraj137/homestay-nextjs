@@ -8,6 +8,7 @@ require('dotenv').config();
 const roomsRouter = require('./routes/rooms');
 const bookingsRouter = require('./routes/bookings');
 const authRouter = require('./routes/auth');
+const adminRouter = require('./routes/admin');
 
 const app = express();
 app.use(cors());
@@ -26,6 +27,7 @@ mongoose
 app.use('/api/rooms', roomsRouter);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/admin', adminRouter);
 
 
 app.get('/', (req, res) => res.send('Homestay API running'));
