@@ -27,48 +27,60 @@ export default function Header() {
 
       {/* Navigation */}
       <nav className="flex items-center space-x-8 text-sm">
-        
-        {user?.role === 'owner' ? (
-          <>
-            {/* Listed Property */}
-            <Link href="/listed-property" className="flex items-center space-x-2 group">
-              <Building2 className="h-4 w-4 text-gray-700 group-hover:text-black" />
-              <div className="flex flex-col leading-tight">
-                <span className="font-medium">Listed Property</span>
-                <span className="text-[11px] text-gray-500">Manage your listings</span>
-              </div>
-            </Link>
 
-            {/* Property List */}
-            <Link href="/property-list" className="flex items-center space-x-2 group">
-              <ShoppingBag className="h-4 w-4 text-gray-700 group-hover:text-black" />
-              <div className="flex flex-col leading-tight">
-                <span className="font-medium">Property List</span>
-                <span className="text-[11px] text-gray-500">See all your properties</span>
-              </div>
-            </Link>
-          </>
-        ) : (
-          <>
-            {/* List Your Property */}
-            <Link href="/owner-signup" className="flex items-center space-x-2 group">
-              <Building2 className="h-4 w-4 text-gray-700 group-hover:text-black" />
-              <div className="flex flex-col leading-tight">
-                <span className="font-medium">List Your Property</span>
-                <span className="text-[11px] text-gray-500">Start earning in 30 mins</span>
-              </div>
-            </Link>
+        {
+          user?.role === 'admin' ? (
+            <>
+              {/* Admin Links */}
+              <Link href="/admin/pending-property" className="font-medium">Pending Property</Link>
+              <Link href="/admin/approved-property" className="font-medium">Approved Property</Link>
+              <Link href="/admin/owners" className="font-medium">Owner List</Link>
+              <Link href="/admin/bookings" className="font-medium">All Booking</Link>
+            </>
+          ) :
+            user?.role === 'owner' ? (
+              <>
+                {
 
-            {/* My Booking */}
-            <Link href="/my-bookings" className="flex items-center space-x-2 group">
-              <ShoppingBag className="h-4 w-4 text-gray-700 group-hover:text-black" />
-              <div className="flex flex-col leading-tight">
-                <span className="font-medium">My Booking</span>
-                <span className="text-[11px] text-gray-500">See your booked rooms</span>
-              </div>
-            </Link>
-          </>
-        )}
+            /* Listed Property */}
+                <Link href="/listed-property" className="flex items-center space-x-2 group">
+                  <Building2 className="h-4 w-4 text-gray-700 group-hover:text-black" />
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-medium">Listed Property</span>
+                    <span className="text-[11px] text-gray-500">Manage your listings</span>
+                  </div>
+                </Link>
+
+                {/* Property List */}
+                <Link href="/property-list" className="flex items-center space-x-2 group">
+                  <ShoppingBag className="h-4 w-4 text-gray-700 group-hover:text-black" />
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-medium">Property List</span>
+                    <span className="text-[11px] text-gray-500">See all your properties</span>
+                  </div>
+                </Link>
+              </>
+            ) : (
+              <>
+                {/* List Your Property */}
+                <Link href="/owner-signup" className="flex items-center space-x-2 group">
+                  <Building2 className="h-4 w-4 text-gray-700 group-hover:text-black" />
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-medium">List Your Property</span>
+                    <span className="text-[11px] text-gray-500">Start earning in 30 mins</span>
+                  </div>
+                </Link>
+
+                {/* My Booking */}
+                <Link href="/my-bookings" className="flex items-center space-x-2 group">
+                  <ShoppingBag className="h-4 w-4 text-gray-700 group-hover:text-black" />
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-medium">My Booking</span>
+                    <span className="text-[11px] text-gray-500">See your booked rooms</span>
+                  </div>
+                </Link>
+              </>
+            )}
 
         {/* Phone */}
         <div className="flex items-center space-x-2">
