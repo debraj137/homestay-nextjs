@@ -27,6 +27,7 @@ export default function Header() {
 
       {/* Navigation */}
       <nav className="flex items-center space-x-8 text-sm">
+        
         {user?.role === 'owner' ? (
           <>
             {/* Listed Property */}
