@@ -98,3 +98,24 @@ exports.updateRoomCategory = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 }
+
+// Get all owners
+exports.getAllOwners = async (req, res) => {
+  try {
+    const owners = await User.find({ role: 'owner' }).select('name email');
+    res.json(owners);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all rooms by owner (both approved & pending)
+exports.getRoomsByOwner = async (req, res) => {
+  try {
+    const { ownerId } = req.params;
+    const rooms = await Room.find({ ownerId });
+    res.json(rooms);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};

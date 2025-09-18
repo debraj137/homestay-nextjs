@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { getOwnersWithPendingRooms, getPendingRoomsByOwner, updateRoomApproval,
-    getOwnersWithApprovedRooms, getApprovedRoomsByOwner, updateRoomCategory
+    getOwnersWithApprovedRooms, getApprovedRoomsByOwner, updateRoomCategory, getAllOwners, getRoomsByOwner
  } = require('../controllers/adminController');
 
 // List owners with pending rooms
@@ -18,5 +18,11 @@ router.put('/room/:roomId/approval', updateRoomApproval);
 router.get('/approved-owners', getOwnersWithApprovedRooms);
 router.get('/approved-rooms/:ownerId', getApprovedRoomsByOwner);
 router.put('/room/:roomId/category', updateRoomCategory);
+
+// Get all owners
+router.get('/owners', getAllOwners);
+
+// Get all rooms of one owner
+router.get('/owner/:ownerId/rooms', getRoomsByOwner);
 
 module.exports = router;
