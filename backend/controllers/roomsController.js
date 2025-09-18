@@ -108,3 +108,37 @@ exports.searchRooms = async (req, res) => {
     res.status(500).json({ message: 'Server errorr' });
   }
 };
+
+exports.getDistinctAmenities = async (req, res) => {
+  try {
+    const amenities = await Room.distinct("amenities", { isApproved: true });
+    res.json(amenities);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch amenities" });
+  }
+};
+
+
+// 🔍 Filter rooms by price & amenities
+exports.filterRooms = async (req, res) => {
+  try {
+    const { maxPrice, amenities } = req.body; // amenities: array of strings
+
+    let query = { isApproved: true, isAvailable: true };
+
+    // ✅ Price filter
+    if (maxPrice) {
+      query.price = { $lte: Number(maxPrice) };
+    }
+
+    // ✅ Amenities filter (all selected amenities must be in room)
+    if (amenities && amenities.length > 0) {
+      query.amenities = { $all: amenities };
+    }
+
+    const rooms = await Room.find(query);
+    res.json(rooms);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
