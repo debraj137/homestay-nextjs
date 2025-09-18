@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Room = require('../models/Room');
-
+const Booking = require('../models/Booking'); // import your Booking model
 exports.getOwnersWithPendingRooms = async (req, res) => {
   try {
     const owners = await Room.find({ isApproved: false })
@@ -117,5 +117,18 @@ exports.getRoomsByOwner = async (req, res) => {
     res.json(rooms);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all bookings
+exports.getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find()
+      .populate('roomId') // get room details
+      .populate('userId', 'name email'); // get user details
+
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch bookings' });
   }
 };
