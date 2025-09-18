@@ -1,5 +1,5 @@
 const Room = require('../models/Room');
-
+const Booking = require('../models/Booking');
 
 exports.listRooms = async (req, res) => {
 try {
@@ -66,3 +66,45 @@ exports.updateRoom = async (req, res) => {
 };
 
 
+
+
+exports.searchRooms = async (req, res) => {
+  try {
+    const { city, checkInDate, checkOutDate } = req.query;
+    console.log("Search params:", city, checkInDate, checkOutDate);
+    if (!city || !checkInDate || !checkOutDate) {
+      return res.status(400).json({ message: 'City, check-in and check-out are required' });
+    }
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+
+    // 1. Get all approved rooms in city
+    let rooms = await Room.find({
+      'location.city': city,
+      isApproved: true,
+      isAvailable: true
+    });
+
+    // 2. Filter out rooms that are already booked in given dates
+    const availableRooms = [];
+    for (let room of rooms) {
+      const overlappingBooking = await Booking.findOne({
+        roomId: room._id,
+        status: 'confirmed',
+        $or: [
+          { checkInDate: { $lt: checkOut }, checkOutDate: { $gt: checkIn } } // overlaps
+        ]
+      });
+
+      if (!overlappingBooking) {
+        availableRooms.push(room);
+      }
+    }
+
+    res.json(availableRooms);
+  } catch (err) {
+    console.error("❌ Error in searchRooms:", err.message, err);
+    res.status(500).json({ message: 'Server errorr' });
+  }
+};

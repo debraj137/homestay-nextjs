@@ -1,0 +1,115 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Filters from '@/components/Filters';
+import toast from 'react-hot-toast';
+
+export default function RoomListPage() {
+  const [rooms, setRooms] = useState([]);
+  const [filters, setFilters] = useState({});
+  const searchParams = useSearchParams();
+
+  const city = searchParams.get('city');
+  const checkInDate = searchParams.get('checkInDate');
+  const checkOutDate = searchParams.get('checkOutDate');
+
+  useEffect(() => {
+    if (!city || !checkInDate || !checkOutDate) return;
+
+    async function fetchRooms() {
+      try {
+        const query = new URLSearchParams({
+          city,
+          checkInDate,
+          checkOutDate,
+          ...(filters.price ? { maxPrice: filters.price } : {}),
+          ...(filters.amenities?.length > 0
+            ? { amenities: filters.amenities.join(',') }
+            : {}),
+        });
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE}/rooms/search?${query.toString()}`
+        );
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+
+        setRooms(data);
+      } catch (err) {
+        toast.error(err.message || 'Failed to fetch rooms');
+      }
+    }
+
+    fetchRooms();
+  }, [city, checkInDate, checkOutDate, filters]);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Filters Sidebar */}
+      <div className="md:col-span-1">
+        <Filters onApply={setFilters} />
+      </div>
+
+      {/* Room Listings */}
+      <div className="md:col-span-3 space-y-6">
+        {rooms.length === 0 ? (
+          <p className="text-gray-600">No rooms available for your search.</p>
+        ) : (
+          rooms.map((room) => (
+            <div
+              key={room._id}
+              className="flex flex-col md:flex-row bg-white rounded-lg shadow overflow-hidden border"
+            >
+              {/* Image */}
+              {room.images?.[0] ? (
+                <img
+                  src={room.images[0]}
+                  alt={room.title}
+                  className="w-full md:w-1/3 h-48 object-cover"
+                />
+              ) : (
+                <div className="w-full md:w-1/3 h-48 bg-gray-200 flex items-center justify-center text-gray-500">
+                  No Image
+                </div>
+              )}
+
+              {/* Details */}
+              <div className="flex-1 p-4 flex flex-col justify-between">
+                <div>
+                  <h2 className="text-lg font-bold">{room.title}</h2>
+                  <p className="text-sm text-gray-500">
+                    {room.location?.city}, {room.location?.state}
+                  </p>
+                  <p className="text-red-600 font-bold mt-2">
+                    ₹{room.price} / night
+                  </p>
+                  {/* Amenities */}
+                  <div className="flex flex-wrap gap-2 mt-2 text-xs text-gray-600">
+                    {room.amenities?.map((a, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-1 border rounded bg-gray-100"
+                      >
+                        {a}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="mt-4 flex space-x-2">
+                  <button className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    Book Now
+                  </button>
+                  <button className="border border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-50">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
