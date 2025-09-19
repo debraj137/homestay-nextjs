@@ -1,7 +1,15 @@
 // 'use client';
 // import { useState } from 'react';
+// import { useSearchParams, useRouter } from 'next/navigation';
 
 // export default function BookingModal({ room, onClose }) {
+//   const searchParams = useSearchParams();
+//   const router = useRouter();
+
+//   // ✅ Dates from Banner.js search
+//   const checkInDate = searchParams.get('checkInDate');
+//   const checkOutDate = searchParams.get('checkOutDate');
+
 //   const [adults, setAdults] = useState(1);
 //   const [children, setChildren] = useState(0);
 //   const [error, setError] = useState('');
@@ -33,11 +41,14 @@
 //   };
 
 //   const handleCheckout = () => {
-//     if (error) return; // prevent checkout if error exists
+//     if (error) return; // stop if validation fails
 
-//     // ✅ Proceed with checkout logic (redirect to checkout page or API call)
-//     console.log("Proceed to checkout with", { adults, children });
-//     onClose();
+//     // ✅ Redirect to checkout with all booking details
+//     router.push(
+//       `/checkout?roomId=${room._id}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&adults=${adults}&children=${children}`
+//     );
+
+//     onClose(); // close modal after proceeding
 //   };
 
 //   return (
@@ -83,7 +94,7 @@
 //         {/* Checkout Button */}
 //         <button
 //           onClick={handleCheckout}
-//           disabled={!!error}
+//           disabled={!!error || !checkInDate || !checkOutDate}
 //           className={`w-full py-2 rounded-lg font-semibold ${
 //             error
 //               ? 'bg-gray-400 text-white cursor-not-allowed'
@@ -98,17 +109,27 @@
 // }
 
 
+
+
+
+
+
+
+
+
+
+
 'use client';
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export default function BookingModal({ room, onClose }) {
+export default function BookingModal({ room, onClose, checkInDate: propCheckInDate, checkOutDate: propCheckOutDate }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // ✅ Dates from Banner.js search
-  const checkInDate = searchParams.get('checkInDate');
-  const checkOutDate = searchParams.get('checkOutDate');
+  // ✅ Use props if passed, otherwise fallback to URL params
+  const checkInDate = propCheckInDate || searchParams.get('checkInDate');
+  const checkOutDate = propCheckOutDate || searchParams.get('checkOutDate');
 
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
@@ -207,3 +228,4 @@ export default function BookingModal({ room, onClose }) {
     </div>
   );
 }
+

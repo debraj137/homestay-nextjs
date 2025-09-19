@@ -7,42 +7,60 @@ import toast from 'react-hot-toast';
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: userLoading } = useAuth(); // ensure context has a loading flag
 
   const roomId = searchParams.get('roomId');
   const checkInDate = searchParams.get('checkInDate');
   const checkOutDate = searchParams.get('checkOutDate');
-  const adults = Number(searchParams.get('adults'));
-  const children = Number(searchParams.get('children'));
+  const adults = Number(searchParams.get('adults')) || 1;
+  const children = Number(searchParams.get('children')) || 0;
 
   const [room, setRoom] = useState(null);
+  const [loadingRoom, setLoadingRoom] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('card');
 
   // Fetch room details
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId) {
+      toast.error('Room ID missing');
+      router.push('/');
+      return;
+    }
+
     async function fetchRoom() {
       try {
+        setLoadingRoom(true);
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/${roomId}`);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message);
+        if (!res.ok) throw new Error(data.message || 'Room not found');
         setRoom(data);
       } catch (err) {
         toast.error(err.message || 'Failed to load room details');
+      } finally {
+        setLoadingRoom(false);
       }
     }
-    fetchRoom();
-  }, [roomId]);
 
-  if (!room || !user) {
+    fetchRoom();
+  }, [roomId, router]);
+
+  if (loadingRoom || userLoading) {
     return <p className="text-center mt-10 text-gray-600">Loading...</p>;
   }
 
-  // Calculate total nights
-  const nights =
-    (new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24);
+  if (!room) {
+    return <p className="text-center mt-10 text-red-600">Room not found.</p>;
+  }
 
-  // Calculate price
+  if (!user) {
+    return <p className="text-center mt-10 text-red-600">Please login to continue booking.</p>;
+  }
+
+  // ✅ Calculate nights safely
+  const nights = Math.max(
+    1,
+    (new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24)
+  );
   const totalPrice = nights * room.price;
 
   async function handleBooking() {
@@ -61,7 +79,7 @@ export default function CheckoutPage() {
           numberOfAdult: adults,
           numberOfChild: children,
           totalPrice,
-          mobileNumber: user.mobileNumber || 'N/A',
+          mobileNumber: user.mobileNumber,
           status: 'confirmed',
         }),
       });
@@ -70,7 +88,7 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error(data.message);
 
       toast.success('Booking confirmed!');
-      router.push('/my-bookings'); // redirect user to booking history
+      router.push('/my-bookings');
     } catch (err) {
       toast.error(err.message || 'Booking failed');
     }
@@ -86,7 +104,7 @@ export default function CheckoutPage() {
         <div className="bg-gray-100 p-4 rounded-md space-y-2">
           <p><strong>Full Name:</strong> {user.name}</p>
           <p><strong>Email Address:</strong> {user.email}</p>
-          <p><strong>Mobile Number:</strong> {user.mobileNumber || 'N/A'}</p>
+          <p><strong>Mobile Number:</strong> {user.mobileNumber}</p>
         </div>
       </div>
 
@@ -108,43 +126,31 @@ export default function CheckoutPage() {
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-3">Payment Method</h2>
         <div className="space-y-2">
-          <label className="flex items-center space-x-2">
-            <input
-              type="radio"
-              name="payment"
-              value="card"
-              checked={paymentMethod === 'card'}
-              onChange={() => setPaymentMethod('card')}
-            />
-            <span>Credit / Debit Card</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="radio"
-              name="payment"
-              value="upi"
-              checked={paymentMethod === 'upi'}
-              onChange={() => setPaymentMethod('upi')}
-            />
-            <span>UPI</span>
-          </label>
-          <label className="flex items-center space-x-2">
-            <input
-              type="radio"
-              name="payment"
-              value="payAtHotel"
-              checked={paymentMethod === 'payAtHotel'}
-              onChange={() => setPaymentMethod('payAtHotel')}
-            />
-            <span>Pay at Hotel</span>
-          </label>
+          {['card', 'upi', 'payAtHotel'].map((method) => (
+            <label key={method} className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="payment"
+                value={method}
+                checked={paymentMethod === method}
+                onChange={() => setPaymentMethod(method)}
+              />
+              <span>
+                {method === 'card'
+                  ? 'Credit / Debit Card'
+                  : method === 'upi'
+                  ? 'UPI'
+                  : 'Pay at Hotel'}
+              </span>
+            </label>
+          ))}
         </div>
       </div>
 
       {/* Confirm Button */}
       <button
         onClick={handleBooking}
-        className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600"
+        className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 w-full"
       >
         Confirm Booking
       </button>
