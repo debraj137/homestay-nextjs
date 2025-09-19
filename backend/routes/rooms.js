@@ -9,6 +9,9 @@ router.get('/search', roomsController.searchRooms);
 router.get('/amenities', roomsController.getDistinctAmenities);
 // ✅ new filter route
 router.post('/filter', roomsController.filterRooms);
+// get rooms by category
+router.get('/category/:category', roomsController.getRoomsByCategory);
+
 // get rooms by owner
 router.get('/owner/:ownerId', roomsController.getRoomsByOwner);
 router.get('/:id', roomsController.getRoom);

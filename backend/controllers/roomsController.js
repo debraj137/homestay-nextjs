@@ -142,3 +142,14 @@ exports.filterRooms = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// Get rooms by category
+exports.getRoomsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+    const rooms = await Room.find({ category, isApproved: true });
+    res.json(rooms);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
