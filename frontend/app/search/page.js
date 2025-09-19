@@ -241,7 +241,7 @@ export default function SearchPage() {
 
                   <div className="mt-4 flex space-x-2">
                     <button className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Book Now</button>
-                    <a href={`/rooms/${room._id}`} className="border border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-50">View Details</a>
+                    <a href={`/rooms/${room._id}?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`} className="border border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-50">View Details</a>
                   </div>
                 </div>
               </div>
