@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: userLoading } = useAuth(); // ensure context has a loading flag
+  const { user, loading: userLoading } = useAuth();
 
   const roomId = searchParams.get('roomId');
   const checkInDate = searchParams.get('checkInDate');
@@ -18,6 +18,7 @@ export default function CheckoutPage() {
   const [room, setRoom] = useState(null);
   const [loadingRoom, setLoadingRoom] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [bookingLoading, setBookingLoading] = useState(false); // ✅ loader for confirm button
 
   // Fetch room details
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function CheckoutPage() {
   const totalPrice = nights * room.price;
 
   async function handleBooking() {
+    setBookingLoading(true); // ✅ start loader
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/bookings`, {
         method: 'POST',
@@ -91,6 +93,8 @@ export default function CheckoutPage() {
       router.push('/my-bookings');
     } catch (err) {
       toast.error(err.message || 'Booking failed');
+    } finally {
+      setBookingLoading(false); // ✅ stop loader
     }
   }
 
@@ -150,9 +154,14 @@ export default function CheckoutPage() {
       {/* Confirm Button */}
       <button
         onClick={handleBooking}
-        className="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 w-full"
+        disabled={bookingLoading} // ✅ disable while loading
+        className={`px-6 py-3 rounded-lg font-semibold w-full ${
+          bookingLoading
+            ? 'bg-gray-400 text-white cursor-not-allowed'
+            : 'bg-red-500 text-white hover:bg-red-600 cursor-pointer'
+        }`}
       >
-        Confirm Booking
+        {bookingLoading ? 'Processing...' : 'Confirm Booking'}
       </button>
     </div>
   );
