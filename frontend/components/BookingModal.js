@@ -127,6 +127,8 @@ export default function BookingModal({ room, onClose }) {
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [error, setError] = useState('');
+    // ✅ Get today's date in yyyy-mm-dd format
+  const today = new Date().toISOString().split('T')[0];
 
   // ✅ Validation function
   const validateGuests = (adultsCount, childrenCount) => {
@@ -187,6 +189,7 @@ export default function BookingModal({ room, onClose }) {
               <label className="block text-sm font-medium mb-1">Check-In Date*</label>
               <input
                 type="date"
+                min={today} // ✅ prevent past dates
                 value={checkInDate}
                 onChange={(e) => setCheckInDate(e.target.value)}
                 className="w-full px-3 py-2 border rounded bg-gray-100 focus:outline-none"
@@ -199,6 +202,7 @@ export default function BookingModal({ room, onClose }) {
                 type="date"
                 value={checkOutDate}
                 onChange={(e) => setCheckOutDate(e.target.value)}
+                 min={checkInDate || today} // ✅ prevent before check-in date
                 className="w-full px-3 py-2 border rounded bg-gray-100 focus:outline-none"
               />
             </div>

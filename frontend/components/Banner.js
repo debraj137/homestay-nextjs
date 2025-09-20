@@ -8,6 +8,8 @@ export default function Banner() {
   const [city, setCity] = useState('');
   const [checkInDate, setCheckInDate] = useState('');
   const [checkOutDate, setCheckOutDate] = useState('');
+  // ✅ Get today's date in yyyy-mm-dd format
+  const today = new Date().toISOString().split('T')[0];
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -65,6 +67,7 @@ export default function Banner() {
           {/* Check-in Date */}
           <input
             type="date"
+            min={today} // ✅ prevent past dates
             className="px-4 py-3 text-gray-800 border-t md:border-t-0 md:border-l w-full md:w-1/4 focus:outline-none"
             value={checkInDate}
             onChange={(e) => setCheckInDate(e.target.value)}
@@ -77,6 +80,7 @@ export default function Banner() {
             className="px-4 py-3 text-gray-800 border-t md:border-t-0 md:border-l w-full md:w-1/4 focus:outline-none"
             value={checkOutDate}
             onChange={(e) => setCheckOutDate(e.target.value)}
+            min={checkInDate || today} // ✅ prevent before check-in date
             required
           />
 
