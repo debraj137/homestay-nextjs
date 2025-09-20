@@ -104,10 +104,10 @@ export default function Footer() {
             Support
           </h3>
           <ul className="space-y-2">
-            <li><a href="#" className="hover:text-red-400 transition">Help Center</a></li>
-            <li><a href="#" className="hover:text-red-400 transition">FAQs</a></li>
-            <li><a href="#" className="hover:text-red-400 transition">Cancellation Policy</a></li>
-            <li><a href="#" className="hover:text-red-400 transition">Terms & Conditions</a></li>
+            <li><a href="/help-center" className="hover:text-red-400 transition">Help Center</a></li>
+            <li><a href="/faqs" className="hover:text-red-400 transition">FAQs</a></li>
+            <li><a href="/cancellation-policy" className="hover:text-red-400 transition">Cancellation Policy</a></li>
+            <li><a href="/terms-and-conditions" className="hover:text-red-400 transition">Terms & Conditions</a></li>
           </ul>
         </div>
 
@@ -132,7 +132,7 @@ export default function Footer() {
           <p>
             Email:{' '}
             <a href="mailto:supportstay.com" className="text-red-400 hover:text-red-300 transition">
-              supportstay.com
+              support@stay.com
             </a>
           </p>
           <p className="mt-2">
