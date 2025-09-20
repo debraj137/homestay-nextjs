@@ -129,7 +129,7 @@ export default function PremiumHomestays() {
                       <div className="flex justify-between mt-3 space-x-2">
                         <button
                           onClick={() => setSelectedRoom(room)} // ✅ open modal
-                          className={`flex-1 px-4 py-2 text-white text-sm font-semibold rounded-lg ${cat.bookBtn}`}
+                          className={`flex-1 px-4 py-2 text-white text-sm font-semibold rounded-lg ${cat.bookBtn} cursor-pointer`}
                         >
                           Book Now
                         </button>

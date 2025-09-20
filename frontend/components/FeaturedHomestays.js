@@ -16,7 +16,7 @@ export default function FeaturedHomestays() {
         </p>
 
         {/* Button */}
-        <button className="px-6 py-3 bg-red-500 text-white font-semibold rounded-md shadow hover:bg-red-600 transition"
+        <button className="cursor-pointer px-6 py-3 bg-red-500 text-white font-semibold rounded-md shadow hover:bg-red-600 transition"
         onClick={() => router.push('/homestays')}>
           View All Homestays
         </button>

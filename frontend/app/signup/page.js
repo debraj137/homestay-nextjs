@@ -4,7 +4,7 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 
 export default function SignupPage() {
-  const [step, setStep] = useState('register'); 
+  const [step, setStep] = useState('register');
   const [form, setForm] = useState({ name: '', email: '', mobileNumber: '', password: '' });
   const [otp, setOtp] = useState({ emailOtp: '', mobileOtp: '' });
   const [loading, setLoading] = useState(false);
@@ -48,6 +48,9 @@ export default function SignupPage() {
       if (!res.ok) throw new Error(data.message);
 
       toast.success(data.message);
+      // ✅ Save token & user to localStorage (assuming backend returns them)
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       window.location.href = '/';
     } catch (err) {
       toast.error(err.message || 'Verification failed');
@@ -85,7 +88,7 @@ export default function SignupPage() {
 
       {/* Content */}
       <div className="relative z-10 max-w-6xl w-full flex flex-col md:flex-row items-center justify-between px-6 md:px-12">
-        
+
         {/* Left */}
         <div className="text-white md:w-1/2 mb-8 md:mb-0">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">

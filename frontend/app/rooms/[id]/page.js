@@ -69,7 +69,7 @@ export default function RoomDetailsPage() {
             </div>
 
             {/* Book Now */}
-            <button className="px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600"
+            <button className="cursor-pointer px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600"
                 onClick={() => setShowModal(true)}>
                 Book Now
             </button>

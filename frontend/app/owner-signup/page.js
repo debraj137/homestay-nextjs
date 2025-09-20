@@ -51,7 +51,7 @@ export default function OwnerSignupPage() {
           <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-2 border rounded-lg"/>
           <input type="tel" placeholder="Mobile Number" value={mobile} onChange={(e) => setMobile(e.target.value)} required className="w-full px-4 py-2 border rounded-lg"/>
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-4 py-2 border rounded-lg"/>
-          <button type="submit" className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-semibold">
+          <button type="submit" className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-semibold cursor-pointer">
             Register
           </button>
         </form>

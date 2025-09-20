@@ -83,7 +83,7 @@ export default function Banner() {
           {/* Search Button */}
           <button
             type="submit"
-            className="px-6 py-3 bg-red-500 text-white font-medium hover:bg-red-600 flex items-center space-x-2 w-full md:w-auto justify-center"
+            className="cursor-pointer px-6 py-3 bg-red-500 text-white font-medium hover:bg-red-600 flex items-center space-x-2 w-full md:w-auto justify-center"
           >
             <Search className="h-4 w-4" />
             <span>Search</span>

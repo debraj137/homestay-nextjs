@@ -205,7 +205,7 @@ export default function BookingModal({ room, onClose }) {
 
             <button
               onClick={handleNextStep}
-              className="w-full bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600"
+              className="w-full bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 cursor-pointer"
             >
               Next
             </button>
@@ -248,7 +248,7 @@ export default function BookingModal({ room, onClose }) {
               className={`w-full py-2 rounded-lg font-semibold ${
                 error
                   ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : 'bg-red-500 text-white hover:bg-red-600'
+                  : 'bg-red-500 text-white hover:bg-red-600 cursor-pointer'
               }`}
             >
               Proceed To Checkout
