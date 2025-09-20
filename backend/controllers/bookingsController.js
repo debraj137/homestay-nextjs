@@ -1,5 +1,23 @@
 const Booking = require('../models/Booking');
+const User = require('../models/User');
 const Room = require('../models/Room');
+const nodemailer = require('nodemailer');
+const twilio = require('twilio');
+
+// ✅ Email transporter (using Gmail or any SMTP)
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER, // your email
+    pass: process.env.EMAIL_PASS, // app password
+  },
+});
+
+// ✅ Twilio Client
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
 
 
 exports.createBooking = async (req, res) => {
@@ -53,7 +71,63 @@ exports.createBooking = async (req, res) => {
     });
 
     await booking.save();
-    res.status(201).json(booking);
+    // 🔹 Fetch extra info for notifications
+    const room = await Room.findById(roomId).populate('ownerId');
+    const user = await User.findById(userId);
+
+    // 📧 Email Content
+    const emailContent = `
+      <h2>Booking Details</h2>
+      <p><strong>Room:</strong> ${room?.title}</p>
+      <p><strong>Check-in:</strong> ${checkIn.toDateString()}</p>
+      <p><strong>Check-out:</strong> ${checkOut.toDateString()}</p>
+      <p><strong>Guests:</strong> ${numberOfAdult} Adults, ${numberOfChild} Children</p>
+      <p><strong>Total Price:</strong> ₹${totalPrice}</p>
+    `;
+
+    // 📧 Send confirmation email to user
+    if (user?.email) {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: 'Booking Confirmation',
+        html: `<p>Hello ${user.name},</p><p>Your booking is confirmed!</p>` + emailContent,
+      });
+    }
+
+    // 📧 Send notification email to room owner
+    if (room?.ownerId?.email) {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: room.ownerId.email,
+        subject: 'New Booking Received',
+        html:
+          `<p>Hello ${room.ownerId.name},</p><p>You have received a new booking.</p>` +
+          emailContent,
+      });
+    }
+
+    // 📲 SMS content
+    const smsMessage = `Booking Confirmed: ${room?.title}, ${checkIn.toDateString()} - ${checkOut.toDateString()}, Guests: ${numberOfAdult}A/${numberOfChild}C, ₹${totalPrice}`;
+    console.log("SMS Message to:", user?.mobileNumber );
+    // 📲 Send SMS to user
+    if (user?.mobileNumber) {
+      await twilioClient.messages.create({
+        body: smsMessage,
+        from: process.env.TWILIO_PHONE,
+        to: `+91${user.mobileNumber}`,
+      });
+    }
+
+    // 📲 Send SMS to owner
+    if (room?.ownerId?.mobileNumber) {
+      await twilioClient.messages.create({
+        body: `New Booking: ${room?.title}, ${checkIn.toDateString()} - ${checkOut.toDateString()}.`,
+        from: process.env.TWILIO_PHONE,
+        to: `+91${room.ownerId.mobileNumber}`,
+      });
+    }
+    res.status(201).json(booking); 
   } catch (err) {
     console.error("Booking creation error:", err);
     res.status(500).json({ message: 'Server error', error: err.message });
