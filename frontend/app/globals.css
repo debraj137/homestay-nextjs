@@ -24,3 +24,7 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.nav-link {
+  @apply text-gray-700 hover:text-red-500 transition-colors;
+}

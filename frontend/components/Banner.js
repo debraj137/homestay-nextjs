@@ -47,11 +47,11 @@ export default function Banner() {
         {/* Search Box */}
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col md:flex-row items-center max-w-3xl mx-auto bg-white rounded-lg overflow-hidden shadow-md"
+          className="flex flex-col gap-2 md:flex-row items-center max-w-3xl mx-auto bg-white rounded-lg overflow-hidden shadow-md p-2 md:p-0"
         >
           {/* City Dropdown */}
           <select
-            className="flex-grow px-4 py-3 text-gray-800 border-none focus:outline-none w-full md:w-1/3"
+            className="flex-grow px-3 py-2 text-gray-800 border-none focus:outline-none w-full md:w-1/3 text-sm md:text-base"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             required
@@ -68,7 +68,7 @@ export default function Banner() {
           <input
             type="date"
             min={today} // ✅ prevent past dates
-            className="px-4 py-3 text-gray-800 border-t md:border-t-0 md:border-l w-full md:w-1/4 focus:outline-none"
+            className="px-3 py-2 text-gray-800 border-t md:border-t-0 md:border-l w-full md:w-1/4 focus:outline-none text-sm md:text-base"
             value={checkInDate}
             onChange={(e) => setCheckInDate(e.target.value)}
             required
@@ -77,7 +77,7 @@ export default function Banner() {
           {/* Check-out Date */}
           <input
             type="date"
-            className="px-4 py-3 text-gray-800 border-t md:border-t-0 md:border-l w-full md:w-1/4 focus:outline-none"
+            className="px-3 py-2 text-gray-800 border-t md:border-t-0 md:border-l w-full md:w-1/4 focus:outline-none text-sm md:text-base"
             value={checkOutDate}
             onChange={(e) => setCheckOutDate(e.target.value)}
             min={checkInDate || today} // ✅ prevent before check-in date
@@ -87,7 +87,7 @@ export default function Banner() {
           {/* Search Button */}
           <button
             type="submit"
-            className="cursor-pointer px-6 py-3 bg-red-500 text-white font-medium hover:bg-red-600 flex items-center space-x-2 w-full md:w-auto justify-center"
+            className="cursor-pointer px-4 py-2 bg-red-500 text-white font-medium hover:bg-red-600 flex items-center space-x-2 w-full md:w-auto justify-center text-sm md:text-base"
           >
             <Search className="h-4 w-4" />
             <span>Search</span>
