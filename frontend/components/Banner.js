@@ -67,6 +67,7 @@ export default function Banner() {
           {/* Check-in Date */}
           <input
             type="date"
+            placeholder="Check-in"
             min={today} // ✅ prevent past dates
             className="px-3 py-2 text-gray-800 border-t md:border-t-0 md:border-l w-full md:w-1/4 focus:outline-none text-sm md:text-base"
             value={checkInDate}
@@ -77,6 +78,7 @@ export default function Banner() {
           {/* Check-out Date */}
           <input
             type="date"
+            placeholder="Check-out"
             className="px-3 py-2 text-gray-800 border-t md:border-t-0 md:border-l w-full md:w-1/4 focus:outline-none text-sm md:text-base"
             value={checkOutDate}
             onChange={(e) => setCheckOutDate(e.target.value)}

@@ -144,7 +144,7 @@ export default function Header() {
       <div className="mx-auto px-4 flex items-center justify-between h-14">
         {/* Logo */}
         <Link href="/" className="flex items-center">
-          <Image src="/stay.png" alt="Stay Logo" width={90} height={30} priority />
+          <Image src="/awadh1_logo.png" alt="Stay Logo" width={90} height={30} priority />
         </Link>
 
         {/* Desktop Nav */}
