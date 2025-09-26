@@ -241,3 +241,225 @@ exports.becomeOwner = async (req, res) => {
     res.status(500).json({ message: 'Error updating role' });
   }
 };
+
+// VERIFY EMAIL OTP ONLY
+exports.verifyEmailOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const now = new Date();
+    if (!user.emailOtp || user.emailOtp !== otp || user.emailOtpExpiry < now) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    user.emailVerified = true;
+    user.emailOtp = null;
+    user.emailOtpExpiry = null;
+    await user.save();
+
+    res.json({ message: 'Email verified successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error verifying email OTP' });
+  }
+};
+
+
+
+// SEND EMAIL OTP (without requiring full signup yet)
+exports.sendEmailOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    // generate OTP
+    const emailOtp = generateOtp();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    // store partial user (only email + OTP)
+    const user = new User({
+      email,
+      password: "temp", // dummy, will be replaced later
+      name: "temp",     // dummy, will be replaced later
+      emailOtp,
+      emailOtpExpiry: expiry,
+      emailVerified: false,
+    });
+
+    await user.save();
+
+    // send email OTP
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Your Email OTP",
+      text: `Your OTP is ${emailOtp}. Valid for 10 minutes.`,
+    });
+
+    res.json({ message: "OTP sent to email successfully" });
+  } catch (err) {
+    console.error("Error sending email OTP:", err);
+    res.status(500).json({ message: "Error sending OTP" });
+  }
+};
+
+// SAVE NAME after email OTP verified
+exports.saveName = async (req, res) => {
+  try {
+    const { email, name } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.emailVerified) {
+      return res.status(400).json({ message: "Email not verified yet" });
+    }
+
+    user.name = name; // ✅ update name
+    await user.save();
+
+    res.json({ message: "Name saved successfully", user });
+  } catch (err) {
+    console.error("Error saving name:", err);
+    res.status(500).json({ message: "Server error while saving name" });
+  }
+};
+
+
+// SAVE PASSWORD
+exports.savePassword = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password saved successfully" });
+  } catch (err) {
+    console.error("Error saving password:", err);
+    res.status(500).json({ message: "Error saving password" });
+  }
+};
+
+// SEND MOBILE OTP
+exports.sendMobileOtp = async (req, res) => {
+  try {
+    const { email, mobileNumber } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const mobileOtp = generateOtp();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.mobileNumber = mobileNumber;
+    user.mobileOtp = mobileOtp;
+    user.mobileOtpExpiry = expiry;
+    await user.save();
+
+    // Send via Twilio
+    await twilioClient.messages.create({
+      body: `Your OTP is ${mobileOtp}. Valid for 10 minutes.`,
+      from: process.env.TWILIO_PHONE,
+      to: `+91${mobileNumber}`,
+    });
+
+    res.json({ message: "OTP sent to mobile successfully" });
+  } catch (err) {
+    console.error("Error sending mobile OTP:", err);
+    res.status(500).json({ message: "Error sending OTP" });
+  }
+};
+
+
+// VERIFY MOBILE OTP
+exports.verifyMobileOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const now = new Date();
+    if (!user.mobileOtp || user.mobileOtp !== otp || user.mobileOtpExpiry < now) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    user.mobileVerified = true;
+    user.mobileOtp = null;
+    user.mobileOtpExpiry = null;
+    await user.save();
+
+    // 🔑 Generate JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      message: "Mobile verified successfully",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        mobileNumber: user.mobileNumber,
+        role: user.role,
+      }
+    });
+  } catch (err) {
+    console.error("Error verifying mobile OTP:", err);
+    res.status(500).json({ message: "Error verifying mobile OTP" });
+  }
+};
+
+// RESEND MOBILE OTP
+exports.resendMobileOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const mobileOtp = generateOtp();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.mobileOtp = mobileOtp;
+    user.mobileOtpExpiry = expiry;
+    await user.save();
+
+    await twilioClient.messages.create({
+      body: `Your new OTP is ${mobileOtp}. Valid for 10 minutes.`,
+      from: process.env.TWILIO_PHONE,
+      to: `+91${user.mobileNumber}`,
+    });
+
+    res.json({ message: "New OTP sent to mobile" });
+  } catch (err) {
+    console.error("Error resending OTP:", err);
+    res.status(500).json({ message: "Error resending OTP" });
+  }
+};
+

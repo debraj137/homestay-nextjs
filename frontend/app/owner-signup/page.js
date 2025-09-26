@@ -151,11 +151,10 @@ export default function OwnerSignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-2 rounded-lg font-semibold cursor-pointer ${
-              loading
+            className={`w-full py-2 rounded-lg font-semibold cursor-pointer ${loading
                 ? 'bg-gray-400 text-white cursor-not-allowed'
                 : 'bg-red-500 hover:bg-red-600 text-white'
-            }`}
+              }`}
           >
             {loading ? 'Registering...' : 'Register'}
           </button>

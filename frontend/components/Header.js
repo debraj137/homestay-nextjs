@@ -141,7 +141,7 @@ export default function Header() {
 
   return (
     <header className="border-b bg-white shadow-sm sticky top-0 z-50">
-      <div className="mx-auto px-4 flex items-center justify-between h-14">
+      <div className="mx-auto px-4 flex items-center justify-between h-16">
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image src="/awadh1_logo.png" alt="Stay Logo" width={90} height={30} priority />

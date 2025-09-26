@@ -105,7 +105,7 @@ export default function SignupPage() {
 
           {step === 'register' && (
             <>
-              <h2 className="text-2xl font-bold text-center mb-6">Create Your Account</h2>
+              <h2 className="text-2xl font-bold text-center mb-6">Create Your Accountt</h2>
               <form onSubmit={handleRegister} className="space-y-4">
                 <input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none" />
                 <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:outline-none" />

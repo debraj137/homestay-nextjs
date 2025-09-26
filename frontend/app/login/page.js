@@ -150,7 +150,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-[calc(100vh-120px)] flex items-center justify-center bg-cover bg-center relative"
+      className="h-screen flex items-center justify-center bg-cover bg-center relative"
       style={{
         backgroundImage: "url('/bed.jpg')", // 👈 put your image inside /public folder
       }}
@@ -219,7 +219,7 @@ export default function LoginPage() {
           {/* Signup Redirect */}
           <p className="text-center text-sm text-gray-600 mt-4">
             Don&apos;t have an account?{' '}
-            <a href="/signup" className="text-red-500 font-semibold">
+            <a href="/signup/email" className="text-red-500 font-semibold">
               Register Now
             </a>
           </p>
