@@ -1,4 +1,5 @@
 'use client';
+import Link from "next/link"; 
 import { useEffect, useState } from 'react';
 import Filters from '@/components/Filters'; // reuse existing Filters component
 import toast from 'react-hot-toast';
@@ -90,7 +91,11 @@ export default function HomestaysPage() {
                 {/* Details */}
                 <div className="p-4 flex flex-col justify-between flex-1">
                   <div>
-                    <h2 className="text-lg font-bold">{room.title}</h2>
+                    <h2 className="text-lg font-bold">
+                      <Link href={`/rooms/${room._id}`} className="hover:underline hover:text-red-600">
+                        {room.title}
+                      </Link>
+                    </h2>
                     <p className="text-sm text-gray-500">
                       {room.location?.city}, {room.location?.state}
                     </p>

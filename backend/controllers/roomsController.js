@@ -68,46 +68,105 @@ exports.updateRoom = async (req, res) => {
 
 
 
+// exports.searchRooms = async (req, res) => {
+//   try {
+//     const { city, checkInDate, checkOutDate } = req.query;
+//     console.log("Search paramss:", city, checkInDate, checkOutDate);
+//     if (!city || !checkInDate || !checkOutDate) {
+//       return res.status(400).json({ message: 'City, check-in and check-out are required' });
+//     }
+
+//     const checkIn = new Date(checkInDate);
+//     const checkOut = new Date(checkOutDate);
+
+//     // 1. Get all approved rooms in city
+//     let rooms = await Room.find({
+//       'location.city': city,
+//       isApproved: true,
+//       isAvailable: true
+//     });
+
+//     // 2. Filter out rooms that are already booked in given dates
+//     const availableRooms = [];
+//     for (let room of rooms) {
+//       const overlappingBooking = await Booking.findOne({
+//         roomId: room._id,
+//         status: 'confirmed',
+//         $or: [
+//           { checkInDate: { $lt: checkOut }, checkOutDate: { $gt: checkIn } } // overlaps
+//         ]
+//       });
+
+//       if (!overlappingBooking) {
+//         availableRooms.push(room);
+//       }
+//     }
+
+//     res.json(availableRooms);
+//   } catch (err) {
+//     console.error("❌ Error in searchRooms:", err.message, err);
+//     res.status(500).json({ message: 'Server errorr' });
+//   }
+// };
+
+// Search rooms by city and availability and capacity
 exports.searchRooms = async (req, res) => {
   try {
-    const { city, checkInDate, checkOutDate } = req.query;
-    console.log("Search params:", city, checkInDate, checkOutDate);
+    console.log("Search query params:", req.query);
+    const { city, checkInDate, checkOutDate, adults, children } = req.query;
+    console.log("Search params:", city, checkInDate, checkOutDate, adults, children);
+
     if (!city || !checkInDate || !checkOutDate) {
-      return res.status(400).json({ message: 'City, check-in and check-out are required' });
+      return res
+        .status(400)
+        .json({ message: "City, check-in and check-out are required" });
     }
 
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
 
-    // 1. Get all approved rooms in city
+    const numAdults = parseInt(adults) || 1;
+    const numChildren = parseInt(children) || 0;
+
+    // ✅ Step 1: Get all approved rooms in city with enough capacity
     let rooms = await Room.find({
-      'location.city': city,
+      "location.city": city,
       isApproved: true,
-      isAvailable: true
+      isAvailable: true,
+      maximumAllowedAdult: { $gte: numAdults },
+      maximumAllowedChild: { $gte: numChildren },
     });
 
-    // 2. Filter out rooms that are already booked in given dates
-    const availableRooms = [];
-    for (let room of rooms) {
-      const overlappingBooking = await Booking.findOne({
-        roomId: room._id,
-        status: 'confirmed',
-        $or: [
-          { checkInDate: { $lt: checkOut }, checkOutDate: { $gt: checkIn } } // overlaps
-        ]
-      });
+    console.log(
+      `Found ${rooms.length} rooms in ${city} with capacity for ${numAdults} adults and ${numChildren} children`
+    );
 
-      if (!overlappingBooking) {
-        availableRooms.push(room);
-      }
-    }
+    // ✅ Step 2: Find already booked rooms for overlapping dates
+    const bookedRoomIds = await Booking.find({
+      roomId: { $in: rooms.map((r) => r._id) },
+      status: "confirmed",
+      checkInDate: { $lt: checkOut },
+      checkOutDate: { $gt: checkIn },
+    }).distinct("roomId");
+
+    console.log("Booked room IDs:", bookedRoomIds);
+
+    // ✅ Step 3: Exclude booked rooms (force string comparison)
+    const availableRooms = rooms.filter(
+      (r) => !bookedRoomIds.map(id => id.toString()).includes(r._id.toString())
+    );
 
     res.json(availableRooms);
   } catch (err) {
     console.error("❌ Error in searchRooms:", err.message, err);
-    res.status(500).json({ message: 'Server errorr' });
+    res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+
+
 
 exports.getDistinctAmenities = async (req, res) => {
   try {

@@ -10,7 +10,9 @@ export default function SearchPageContent() {
   const city = searchParams.get('city');
   const checkInDate = searchParams.get('checkInDate');
   const checkOutDate = searchParams.get('checkOutDate');
-
+  const adults = searchParams.get('adults');
+  console.log("Adults:", adults);
+  const children = searchParams.get('children');
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
@@ -23,7 +25,8 @@ export default function SearchPageContent() {
       }
       try {
         setLoading(true);
-        const query = new URLSearchParams({ city, checkInDate, checkOutDate });
+        const query = new URLSearchParams({ city, checkInDate, checkOutDate, adults, children });
+        console.log("Fetching with query:", query.toString());
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE}/rooms/search?${query.toString()}`
         );
@@ -38,7 +41,7 @@ export default function SearchPageContent() {
     }
 
     fetchInitial();
-  }, [city, checkInDate, checkOutDate]);
+  }, [city, checkInDate, checkOutDate, adults, children]);
 
   async function handleFilterApply(filters) {
     try {
@@ -101,11 +104,18 @@ export default function SearchPageContent() {
                   </div>
 
                   <div className="mt-4 flex space-x-2">
-                    <button onClick={() => setSelectedRoom(room)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                    {/* <button onClick={() => setSelectedRoom(room)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                       Book Now
-                    </button>
-                    <a href={`/rooms/${room._id}?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}`}
-                       className="border border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-50">
+                    </button> */}
+                    {/* ✅ Direct to checkout */}
+                    <a
+                      href={`/checkout?roomId=${room._id}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&adults=${searchParams.get('adults')}&children=${searchParams.get('children')}`}
+                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    >
+                      Book Now
+                    </a>
+                    <a href={`/rooms/${room._id}?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&adults=${searchParams.get('adults')}&children=${searchParams.get('children')}`}
+                      className="border border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-50">
                       View Details
                     </a>
                   </div>
