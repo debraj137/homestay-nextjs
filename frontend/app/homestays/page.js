@@ -1,5 +1,6 @@
 'use client';
 import Link from "next/link"; 
+import slugify from "slugify"; 
 import { useEffect, useState } from 'react';
 import Filters from '@/components/Filters'; // reuse existing Filters component
 import toast from 'react-hot-toast';
@@ -92,7 +93,7 @@ export default function HomestaysPage() {
                 <div className="p-4 flex flex-col justify-between flex-1">
                   <div>
                     <h2 className="text-lg font-bold">
-                      <Link href={`/rooms/${room._id}`} className="hover:underline hover:text-red-600">
+                      <Link href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}`} className="hover:underline hover:text-red-600">
                         {room.title}
                       </Link>
                     </h2>
@@ -117,7 +118,7 @@ export default function HomestaysPage() {
                   {/* Actions */}
                   <div className="mt-4 flex space-x-2">
                     <a
-                      href={`/rooms/${room._id}`}
+                      href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}`}
                       className="flex-1 text-center bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
                     >
                       View Details
