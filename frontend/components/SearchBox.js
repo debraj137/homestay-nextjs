@@ -60,7 +60,7 @@ export default function SearchBox() {
     >
       {/* City Dropdown */}
       <div className="flex flex-col w-full md:w-1/4">
-        <label className="text-xs font-semibold text-gray-600 mb-1">City</label>
+        <label className="text-xs font-semibold text-gray-600 mb-1">Destination</label>
         <select
           className="px-3 py-2 text-gray-800 border rounded focus:outline-none text-sm md:text-base"
           value={city}
