@@ -34,8 +34,9 @@ export default function HomestaysPage() {
       const body = {
         maxPrice: filters.maxPrice ?? null,
         amenities: filters.amenities ?? [],
+        minRating: filters.minRating ?? null, // ⭐ added
       };
-
+      console.log("Filter body:", body);
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/filter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

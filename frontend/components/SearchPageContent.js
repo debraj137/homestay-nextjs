@@ -53,6 +53,7 @@ export default function SearchPageContent() {
         body: JSON.stringify({
           maxPrice: filters.maxPrice ?? null,
           amenities: filters.amenities ?? [],
+          minRating: filters.minRating ?? null,  // ✅ added
           city,
           checkInDate,
           checkOutDate,
