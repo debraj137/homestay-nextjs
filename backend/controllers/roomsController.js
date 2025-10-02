@@ -59,16 +59,65 @@ exports.updateRoom = async (req, res) => {
 
 
 // Search rooms by city and availability and capacity
+// exports.searchRooms = async (req, res) => {
+//   try {
+//     console.log("Search query params:", req.query);
+//     const { city, checkInDate, checkOutDate, adults, children } = req.query;
+//     console.log("Search params:", city, checkInDate, checkOutDate, adults, children);
+
+//     if (!city || !checkInDate || !checkOutDate) {
+//       return res
+//         .status(400)
+//         .json({ message: "City, check-in and check-out are required" });
+//     }
+
+//     const checkIn = new Date(checkInDate);
+//     const checkOut = new Date(checkOutDate);
+
+//     const numAdults = parseInt(adults) || 1;
+//     const numChildren = parseInt(children) || 0;
+
+//     // ✅ Step 1: Get all approved rooms in city with enough capacity
+//     let rooms = await Room.find({
+//       "location.city": city,
+//       isApproved: true,
+//       isAvailable: true,
+//       maximumAllowedAdult: { $gte: numAdults },
+//       maximumAllowedChild: { $gte: numChildren },
+//     });
+
+//     console.log(
+//       `Found ${rooms.length} rooms in ${city} with capacity for ${numAdults} adults and ${numChildren} children`
+//     );
+
+//     // ✅ Step 2: Find already booked rooms for overlapping dates
+//     const bookedRoomIds = await Booking.find({
+//       roomId: { $in: rooms.map((r) => r._id) },
+//       status: "confirmed",
+//       checkInDate: { $lt: checkOut },
+//       checkOutDate: { $gt: checkIn },
+//     }).distinct("roomId");
+
+//     console.log("Booked room IDs:", bookedRoomIds);
+
+//     // ✅ Step 3: Exclude booked rooms (force string comparison)
+//     const availableRooms = rooms.filter(
+//       (r) => !bookedRoomIds.map(id => id.toString()).includes(r._id.toString())
+//     );
+
+//     res.json(availableRooms);
+//   } catch (err) {
+//     console.error("❌ Error in searchRooms:", err.message, err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 exports.searchRooms = async (req, res) => {
   try {
-    console.log("Search query params:", req.query);
     const { city, checkInDate, checkOutDate, adults, children } = req.query;
-    console.log("Search params:", city, checkInDate, checkOutDate, adults, children);
 
     if (!city || !checkInDate || !checkOutDate) {
-      return res
-        .status(400)
-        .json({ message: "City, check-in and check-out are required" });
+      return res.status(400).json({ message: "City, check-in and check-out are required" });
     }
 
     const checkIn = new Date(checkInDate);
@@ -77,20 +126,14 @@ exports.searchRooms = async (req, res) => {
     const numAdults = parseInt(adults) || 1;
     const numChildren = parseInt(children) || 0;
 
-    // ✅ Step 1: Get all approved rooms in city with enough capacity
     let rooms = await Room.find({
       "location.city": city,
       isApproved: true,
       isAvailable: true,
       maximumAllowedAdult: { $gte: numAdults },
       maximumAllowedChild: { $gte: numChildren },
-    });
+    }).lean();
 
-    console.log(
-      `Found ${rooms.length} rooms in ${city} with capacity for ${numAdults} adults and ${numChildren} children`
-    );
-
-    // ✅ Step 2: Find already booked rooms for overlapping dates
     const bookedRoomIds = await Booking.find({
       roomId: { $in: rooms.map((r) => r._id) },
       status: "confirmed",
@@ -98,12 +141,42 @@ exports.searchRooms = async (req, res) => {
       checkOutDate: { $gt: checkIn },
     }).distinct("roomId");
 
-    console.log("Booked room IDs:", bookedRoomIds);
-
-    // ✅ Step 3: Exclude booked rooms (force string comparison)
-    const availableRooms = rooms.filter(
+    let availableRooms = rooms.filter(
       (r) => !bookedRoomIds.map(id => id.toString()).includes(r._id.toString())
     );
+
+    // Add ratings
+    const roomIds = availableRooms.map(r => r._id);
+    const ratings = await Review.aggregate([
+      { $match: { roomId: { $in: roomIds } } },
+      {
+        $group: {
+          _id: "$roomId",
+          averageRating: { $avg: "$rating" },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const ratingMap = {};
+    ratings.forEach((r) => {
+      ratingMap[r._id.toString()] = {
+        averageRating: r.averageRating,
+        totalReviews: r.totalReviews,
+      };
+    });
+
+    availableRooms = availableRooms.map((room) => {
+      const ratingData = ratingMap[room._id.toString()] || {
+        averageRating: 0,
+        totalReviews: 0,
+      };
+      return {
+        ...room,
+        averageRating: parseFloat(ratingData.averageRating.toFixed(1)),
+        totalReviews: ratingData.totalReviews,
+      };
+    });
 
     res.json(availableRooms);
   } catch (err) {
@@ -127,10 +200,11 @@ exports.getDistinctAmenities = async (req, res) => {
 };
 
 
-// 🔍 Filter rooms by price & amenities
+// 🔍 Filter rooms by price, amenities & average rating
 // exports.filterRooms = async (req, res) => {
 //   try {
-//     const { maxPrice, amenities } = req.body; // amenities: array of strings
+//     console.log("Filter params:", req.body);
+//     const { maxPrice, amenities, minRating } = req.body;
 
 //     let query = { isApproved: true, isAvailable: true };
 
@@ -139,84 +213,121 @@ exports.getDistinctAmenities = async (req, res) => {
 //       query.price = { $lte: Number(maxPrice) };
 //     }
 
-//     // ✅ Amenities filter (all selected amenities must be in room)
+//     // ✅ Amenities filter
 //     if (amenities && amenities.length > 0) {
 //       query.amenities = { $all: amenities };
 //     }
 
-//     const rooms = await Room.find(query);
-//     res.json(rooms);
+//     // Step 1: Get base rooms
+//     const rooms = await Room.find(query).lean();
+//     if (rooms.length === 0) {
+//       return res.json([]);
+//     }
+
+//     // Step 2: Aggregate reviews to get avg rating per room
+//     const ratings = await Review.aggregate([
+//       { $match: { roomId: { $in: rooms.map(r => r._id) } } },
+//       {
+//         $group: {
+//           _id: "$roomId",
+//           averageRating: { $avg: "$rating" },
+//           totalReviews: { $sum: 1 }
+//         }
+//       }
+//     ]);
+
+//     // Step 3: Create lookup map
+//     const ratingMap = {};
+//     ratings.forEach(r => {
+//       ratingMap[r._id.toString()] = {
+//         averageRating: r.averageRating,
+//         totalReviews: r.totalReviews
+//       };
+//     });
+
+//     // Step 4: Merge rating data into rooms and filter by minRating
+//     const filteredRooms = rooms
+//       .map(room => {
+//         const ratingData = ratingMap[room._id.toString()] || { averageRating: 0, totalReviews: 0 };
+//         return {
+//           ...room,
+//           averageRating: parseFloat(ratingData.averageRating.toFixed(1)),
+//           totalReviews: ratingData.totalReviews
+//         };
+//       })
+//       .filter(room => {
+//         if (minRating) {
+//           return room.averageRating >= Number(minRating);
+//         }
+//         return true;
+//       });
+
+//     res.json(filteredRooms);
 //   } catch (err) {
+//     console.error("❌ Error filtering rooms:", err.message);
 //     res.status(500).json({ message: 'Server error', error: err.message });
 //   }
 // };
 
-// 🔍 Filter rooms by price, amenities & average rating
 exports.filterRooms = async (req, res) => {
   try {
-    console.log("Filter params:", req.body);
     const { maxPrice, amenities, minRating } = req.body;
 
     let query = { isApproved: true, isAvailable: true };
 
-    // ✅ Price filter
     if (maxPrice) {
       query.price = { $lte: Number(maxPrice) };
     }
-
-    // ✅ Amenities filter
     if (amenities && amenities.length > 0) {
       query.amenities = { $all: amenities };
     }
 
-    // Step 1: Get base rooms
     const rooms = await Room.find(query).lean();
-    if (rooms.length === 0) {
-      return res.json([]);
-    }
+    if (rooms.length === 0) return res.json([]);
 
-    // Step 2: Aggregate reviews to get avg rating per room
+    const roomIds = rooms.map((r) => r._id);
+
+    // Aggregate reviews
     const ratings = await Review.aggregate([
-      { $match: { roomId: { $in: rooms.map(r => r._id) } } },
+      { $match: { roomId: { $in: roomIds } } },
       {
         $group: {
           _id: "$roomId",
           averageRating: { $avg: "$rating" },
-          totalReviews: { $sum: 1 }
-        }
-      }
+          totalReviews: { $sum: 1 },
+        },
+      },
     ]);
 
-    // Step 3: Create lookup map
     const ratingMap = {};
-    ratings.forEach(r => {
+    ratings.forEach((r) => {
       ratingMap[r._id.toString()] = {
         averageRating: r.averageRating,
-        totalReviews: r.totalReviews
+        totalReviews: r.totalReviews,
       };
     });
 
-    // Step 4: Merge rating data into rooms and filter by minRating
-    const filteredRooms = rooms
-      .map(room => {
-        const ratingData = ratingMap[room._id.toString()] || { averageRating: 0, totalReviews: 0 };
+    // Merge ratings
+    const enrichedRooms = rooms
+      .map((room) => {
+        const ratingData = ratingMap[room._id.toString()] || {
+          averageRating: 0,
+          totalReviews: 0,
+        };
         return {
           ...room,
           averageRating: parseFloat(ratingData.averageRating.toFixed(1)),
-          totalReviews: ratingData.totalReviews
+          totalReviews: ratingData.totalReviews,
         };
       })
-      .filter(room => {
-        if (minRating) {
-          return room.averageRating >= Number(minRating);
-        }
-        return true;
-      });
+      .filter((room) =>
+        minRating ? room.averageRating >= Number(minRating) : true
+      );
 
-    res.json(filteredRooms);
+    res.json(enrichedRooms);
   } catch (err) {
     console.error("❌ Error filtering rooms:", err.message);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
