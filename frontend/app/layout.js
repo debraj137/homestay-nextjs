@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Awadh Hotels | Book Affordable Homestays in Ayodhya, Varanasi & More",
-  description: "Find and book budget-friendly homestays in Ayodhya, Varanasi, Lucknow, and Agra. Enjoy comfortable stays, easy booking, verified properties, and instant confirmation with Awadh Hotels.",
+  title: {
+    default: "Awadh Hotels",
+    template: "%s | Awadh Hotels", // applies to dynamic pages
+  },
+  description: "Find and book the best stays with Awadh Hotels.",
 };
 
 export default function RootLayout({ children }) {
@@ -28,10 +31,10 @@ export default function RootLayout({ children }) {
     //     {children}
     //   </body>
     // </html>
-    <html>
-      <head>
+    <html lang="en">
+      {/* <head>
         <title>Homestay</title>
-      </head>
+      </head> */}
       <body className="flex flex-col min-h-screen">
         <AuthProvider>
           <Header />
