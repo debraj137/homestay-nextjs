@@ -1,16 +1,21 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { MapPin, Calendar, Users } from 'lucide-react';
 
 export default function MyBookingsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      router.push('/login');
+      return;
+    };
 
     async function fetchBookings() {
       try {
