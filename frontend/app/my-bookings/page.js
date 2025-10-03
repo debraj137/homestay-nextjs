@@ -38,7 +38,7 @@ export default function MyBookingsPage() {
     }
 
     fetchBookings();
-  }, [user]);
+  }, [user, router]);
 
   if (loading) return <p className="text-center py-8">Loading bookings...</p>;
 

@@ -1,6 +1,7 @@
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const Room = require('../models/Room');
+const { bookingConfirmationTemplate, ownerNotificationTemplate } = require('../utils/emailTemplates');
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 
@@ -90,8 +91,8 @@ exports.createBooking = async (req, res) => {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: user.email,
-        subject: 'Booking Confirmation',
-        html: `<p>Hello ${user.name},</p><p>Your booking is confirmed!</p>` + emailContent,
+        subject: 'Booking Confirmation - Awadh Hotels',
+        html: bookingConfirmationTemplate(user, room, booking),
       });
     }
 
@@ -101,9 +102,7 @@ exports.createBooking = async (req, res) => {
         from: process.env.EMAIL_USER,
         to: room.ownerId.email,
         subject: 'New Booking Received',
-        html:
-          `<p>Hello ${room.ownerId.name},</p><p>You have received a new booking.</p>` +
-          emailContent,
+        html:ownerNotificationTemplate(room.ownerId, user, room, booking),
       });
     }
 
