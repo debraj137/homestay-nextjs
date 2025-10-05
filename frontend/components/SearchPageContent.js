@@ -374,7 +374,14 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams, onBookN
       {/* Details */}
       <div className="flex-1 p-5 flex flex-col justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">{room.title}</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            <a
+              href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}${queryString}`}
+              className="hover:text-red-500 transition-colors duration-200"
+            >
+              {room.title}
+            </a>
+          </h2>
           <p className="text-sm text-gray-500">
             {room.location?.city}, {room.location?.state}
           </p>

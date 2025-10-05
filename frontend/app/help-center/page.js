@@ -33,7 +33,7 @@ export default function HelpCenterPage() {
         If you need further assistance, reach out via:
       </p>
       <ul className="list-disc pl-6 text-gray-700 space-y-2">
-        <li>Email: <a href="mailto:support@stay.com" className="text-red-500 hover:underline">support@stay.com</a></li>
+        <li>Email: <a href="mailto:support@awadhhotels.com" className="text-red-500 hover:underline">support@awadhhotels.com</a></li>
         <li>Phone: <a href="tel:+911234567890" className="text-red-500 hover:underline">+91 123-456-7890</a></li>
         <li>Live Chat: Available on our website (9am - 9pm IST)</li>
       </ul>

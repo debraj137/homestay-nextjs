@@ -6,7 +6,7 @@ export default function TermsAndConditionsPage() {
       <h1 className="text-3xl font-bold mb-6 text-gray-900">Terms & Conditions</h1>
 
       <p className="text-gray-700 mb-4">
-        Welcome to <strong>STAY Rooms</strong>. By accessing and using our website and services,
+        Welcome to <strong>Awadh Hotels</strong>. By accessing and using our website and services,
         you agree to the following terms and conditions.
       </p>
 
@@ -30,14 +30,14 @@ export default function TermsAndConditionsPage() {
 
       <h2 className="text-xl font-semibold mt-6 mb-2 text-gray-800">4. Liability</h2>
       <p className="text-gray-700 mb-4">
-        STAY Rooms is not responsible for loss of personal belongings, accidents, or events beyond
+        Awadh Hotels is not responsible for loss of personal belongings, accidents, or events beyond
         our control (such as natural disasters).
       </p>
 
       <p className="mt-8 text-gray-600 italic">
         If you have any questions about these terms, please contact us at{' '}
-        <a href="mailto:support@stay.com" className="text-red-500 hover:underline">
-          support@stay.com
+        <a href="mailto:support@awadhhotels.com" className="text-red-500 hover:underline">
+          support@awadhhotels.com
         </a>.
       </p>
     </div>

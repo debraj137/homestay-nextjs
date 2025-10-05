@@ -5,7 +5,7 @@ export default function CancellationPolicyPage() {
     <div className="max-w-4xl mx-auto px-6 py-12">
       <h1 className="text-3xl font-bold mb-6 text-gray-900">Cancellation Policy</h1>
       <p className="text-gray-700 mb-4">
-        At <strong>STAY Rooms</strong>, we understand that plans can change. Our cancellation policy
+        At <strong>Awadh Hotels</strong>, we understand that plans can change. Our cancellation policy
         is designed to be fair to both our guests and property owners.
       </p>
 
@@ -29,7 +29,7 @@ export default function CancellationPolicyPage() {
       <h2 className="text-xl font-semibold mt-6 mb-2 text-gray-800">4. Special Cases</h2>
       <p className="text-gray-700 mb-4">
         In cases of <strong>natural disasters, medical emergencies, or government restrictions</strong>,
-        exceptions may be granted at the discretion of STAY Rooms management.
+        exceptions may be granted at the discretion of Awadh Hotels management.
       </p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2 text-gray-800">5. Refund Timeline</h2>
@@ -40,8 +40,8 @@ export default function CancellationPolicyPage() {
 
       <p className="mt-8 text-gray-600 italic">
         For assistance with cancellations, please contact our support team at{' '}
-        <a href="mailto:support@stay.com" className="text-red-500 hover:underline">
-          support@stay.com
+        <a href="mailto:support@awadhhotels.com" className="text-red-500 hover:underline">
+          support@awadhhotels.com
         </a>{' '}
         or call us at{' '}
         <a href="tel:+911234567890" className="text-red-500 hover:underline">

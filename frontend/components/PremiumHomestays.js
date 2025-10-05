@@ -1,5 +1,5 @@
 'use client';
-import slugify from "slugify"; 
+import slugify from "slugify";
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import BookingModal from '@/components/BookingModal'; // ✅ import modal
@@ -99,7 +99,12 @@ export default function PremiumHomestays() {
                     <div className="p-4 flex flex-col space-y-2">
                       <div className="flex justify-between items-center">
                         <h4 className="font-semibold text-lg truncate">
-                          {room.title}
+                          <a
+                            href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}`}
+                            className="hover:text-red-500 transition-colors duration-200"
+                          >
+                            {room.title}
+                          </a>
                         </h4>
                         <span
                           className={`px-2 py-1 text-xs font-semibold rounded-full ${cat.badge}`}

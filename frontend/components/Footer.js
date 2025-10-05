@@ -55,8 +55,8 @@ export default function Footer() {
           </h3>
           <p>
             Email:{' '}
-            <a href="mailto:supportstay.com" className="text-red-400 hover:text-red-300 transition">
-              support@stay.com
+            <a href="mailto:support@awadhhotels.com" className="text-red-400 hover:text-red-300 transition">
+              support@awadhhotels.com
             </a>
           </p>
           <p className="mt-2">
@@ -81,7 +81,7 @@ export default function Footer() {
 
       {/* Bottom Section */}
       <div className="border-t border-gray-700 mt-8 pt-4 text-center text-sm text-gray-500">
-        © 2025 STAY Rooms Pvt. Ltd. All rights reserved.
+        © 2025 Awadh Hotels Pvt. Ltd. All rights reserved.
       </div>
     </footer>
   );

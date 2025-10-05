@@ -49,8 +49,8 @@ export default function FAQsPage() {
 
       <p className="mt-10 text-gray-600">
         Still have questions? Reach out to us at{' '}
-        <a href="mailto:support@stay.com" className="text-red-500 hover:underline">
-          support@stay.com
+        <a href="mailto:support@awadhhotels.com" className="text-red-500 hover:underline">
+          support@awadhhotels.com
         </a>{' '}
         or call{' '}
         <a href="tel:+911234567890" className="text-red-500 hover:underline">
