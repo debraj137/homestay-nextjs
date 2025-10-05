@@ -58,17 +58,14 @@ exports.updateRoom = async (req, res) => {
 
 
 
-// Search rooms by city and availability and capacity
+
+
 // exports.searchRooms = async (req, res) => {
 //   try {
-//     console.log("Search query params:", req.query);
 //     const { city, checkInDate, checkOutDate, adults, children } = req.query;
-//     console.log("Search params:", city, checkInDate, checkOutDate, adults, children);
 
 //     if (!city || !checkInDate || !checkOutDate) {
-//       return res
-//         .status(400)
-//         .json({ message: "City, check-in and check-out are required" });
+//       return res.status(400).json({ message: "City, check-in and check-out are required" });
 //     }
 
 //     const checkIn = new Date(checkInDate);
@@ -77,20 +74,14 @@ exports.updateRoom = async (req, res) => {
 //     const numAdults = parseInt(adults) || 1;
 //     const numChildren = parseInt(children) || 0;
 
-//     // ✅ Step 1: Get all approved rooms in city with enough capacity
 //     let rooms = await Room.find({
 //       "location.city": city,
 //       isApproved: true,
 //       isAvailable: true,
 //       maximumAllowedAdult: { $gte: numAdults },
 //       maximumAllowedChild: { $gte: numChildren },
-//     });
+//     }).lean();
 
-//     console.log(
-//       `Found ${rooms.length} rooms in ${city} with capacity for ${numAdults} adults and ${numChildren} children`
-//     );
-
-//     // ✅ Step 2: Find already booked rooms for overlapping dates
 //     const bookedRoomIds = await Booking.find({
 //       roomId: { $in: rooms.map((r) => r._id) },
 //       status: "confirmed",
@@ -98,12 +89,42 @@ exports.updateRoom = async (req, res) => {
 //       checkOutDate: { $gt: checkIn },
 //     }).distinct("roomId");
 
-//     console.log("Booked room IDs:", bookedRoomIds);
-
-//     // ✅ Step 3: Exclude booked rooms (force string comparison)
-//     const availableRooms = rooms.filter(
+//     let availableRooms = rooms.filter(
 //       (r) => !bookedRoomIds.map(id => id.toString()).includes(r._id.toString())
 //     );
+
+//     // Add ratings
+//     const roomIds = availableRooms.map(r => r._id);
+//     const ratings = await Review.aggregate([
+//       { $match: { roomId: { $in: roomIds } } },
+//       {
+//         $group: {
+//           _id: "$roomId",
+//           averageRating: { $avg: "$rating" },
+//           totalReviews: { $sum: 1 },
+//         },
+//       },
+//     ]);
+
+//     const ratingMap = {};
+//     ratings.forEach((r) => {
+//       ratingMap[r._id.toString()] = {
+//         averageRating: r.averageRating,
+//         totalReviews: r.totalReviews,
+//       };
+//     });
+
+//     availableRooms = availableRooms.map((room) => {
+//       const ratingData = ratingMap[room._id.toString()] || {
+//         averageRating: 0,
+//         totalReviews: 0,
+//       };
+//       return {
+//         ...room,
+//         averageRating: parseFloat(ratingData.averageRating.toFixed(1)),
+//         totalReviews: ratingData.totalReviews,
+//       };
+//     });
 
 //     res.json(availableRooms);
 //   } catch (err) {
@@ -112,20 +133,20 @@ exports.updateRoom = async (req, res) => {
 //   }
 // };
 
+
 exports.searchRooms = async (req, res) => {
   try {
     const { city, checkInDate, checkOutDate, adults, children } = req.query;
 
-    if (!city || !checkInDate || !checkOutDate) {
-      return res.status(400).json({ message: "City, check-in and check-out are required" });
+    // ✅ Require only city
+    if (!city) {
+      return res.status(400).json({ message: "City is required" });
     }
-
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
 
     const numAdults = parseInt(adults) || 1;
     const numChildren = parseInt(children) || 0;
 
+    // ✅ Fetch rooms by city and capacity
     let rooms = await Room.find({
       "location.city": city,
       isApproved: true,
@@ -134,19 +155,33 @@ exports.searchRooms = async (req, res) => {
       maximumAllowedChild: { $gte: numChildren },
     }).lean();
 
-    const bookedRoomIds = await Booking.find({
-      roomId: { $in: rooms.map((r) => r._id) },
-      status: "confirmed",
-      checkInDate: { $lt: checkOut },
-      checkOutDate: { $gt: checkIn },
-    }).distinct("roomId");
+    // ✅ If no date range provided, skip booking overlap logic
+    let availableRooms = rooms;
 
-    let availableRooms = rooms.filter(
-      (r) => !bookedRoomIds.map(id => id.toString()).includes(r._id.toString())
-    );
+    if (checkInDate && checkOutDate) {
+      const checkIn = new Date(checkInDate);
+      const checkOut = new Date(checkOutDate);
 
-    // Add ratings
-    const roomIds = availableRooms.map(r => r._id);
+      // Ensure valid date range
+      if (isNaN(checkIn.getTime()) || isNaN(checkOut.getTime()) || checkIn >= checkOut) {
+        return res.status(400).json({ message: "Invalid check-in/check-out dates" });
+      }
+
+      // ✅ Find booked room IDs overlapping with the selected range
+      const bookedRoomIds = await Booking.find({
+        roomId: { $in: rooms.map((r) => r._id) },
+        status: "confirmed",
+        checkInDate: { $lt: checkOut },
+        checkOutDate: { $gt: checkIn },
+      }).distinct("roomId");
+
+      availableRooms = rooms.filter(
+        (r) => !bookedRoomIds.map((id) => id.toString()).includes(r._id.toString())
+      );
+    }
+
+    // ✅ Add rating info
+    const roomIds = availableRooms.map((r) => r._id);
     const ratings = await Review.aggregate([
       { $match: { roomId: { $in: roomIds } } },
       {
@@ -184,8 +219,6 @@ exports.searchRooms = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 
 

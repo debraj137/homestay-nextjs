@@ -1,6 +1,6 @@
 // 'use client';
 // import slugify from "slugify"; 
-// import { useEffect, useState } from 'react';
+// import { useEffect, useState, useMemo } from 'react';
 // import { useSearchParams } from 'next/navigation';
 // import Filters from '@/components/Filters';
 // import BookingModal from '@/components/BookingModal';
@@ -154,6 +154,9 @@
 //   const [loading, setLoading] = useState(false);
 //   const [selectedRoom, setSelectedRoom] = useState(null);
 
+//   // ✅ New state for property search
+//   const [propertyQuery, setPropertyQuery] = useState("");
+
 //   useEffect(() => {
 //     async function fetchInitial() {
 //       if (!city || !checkInDate || !checkOutDate) {
@@ -205,10 +208,33 @@
 //     }
 //   }
 
+//   // ✅ Filtered rooms by propertyQuery
+//   const filteredRooms = useMemo(() => {
+//     if (!propertyQuery.trim()) return rooms;
+//     return rooms.filter((room) =>
+//       room.title.toLowerCase().includes(propertyQuery.toLowerCase())
+//     );
+//   }, [rooms, propertyQuery]);
+
 //   return (
 //     <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
 //       {/* Sidebar */}
-//       <div className="md:col-span-1">
+//       <div className="md:col-span-1 space-y-6 lg:pt-[54px] md:pt-[54px]">
+//         {/* ✅ Property name search input above Filters */}
+//         <div>
+//           <label className="block text-sm font-bold text-gray-700 mb-2">
+//             Search By Property Name
+//           </label>
+//           <input
+//             type="text"
+//             placeholder="Enter property name..."
+//             value={propertyQuery}
+//             onChange={(e) => setPropertyQuery(e.target.value)}
+//             className="w-full border rounded-lg px-4 py-2 shadow-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
+//           />
+//         </div>
+
+//         {/* Filters component */}
 //         <Filters onApply={handleFilterApply} />
 //       </div>
 
@@ -221,11 +247,11 @@
 
 //         {loading ? (
 //           <p className="text-gray-600">Loading...</p>
-//         ) : rooms.length === 0 ? (
+//         ) : filteredRooms.length === 0 ? (
 //           <p className="text-gray-600">No rooms available for your search.</p>
 //         ) : (
 //           <div className="space-y-6">
-//             {rooms.map((room) => (
+//             {filteredRooms.map((room) => (
 //               <RoomCard
 //                 key={room._id}
 //                 room={room}
@@ -251,29 +277,49 @@
 //   );
 // }
 
+
 'use client';
-import slugify from "slugify"; 
+import slugify from "slugify";
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Filters from '@/components/Filters';
 import BookingModal from '@/components/BookingModal';
 import toast from 'react-hot-toast';
-import { ChevronLeft, ChevronRight } from "lucide-react"; // icons
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // ✅ Child component for each room card
-function RoomCard({ room, city, checkInDate, checkOutDate, searchParams }) {
+function RoomCard({ room, city, checkInDate, checkOutDate, searchParams, onBookNow }) {
   const [currentImage, setCurrentImage] = useState(0);
 
-  const nextImage = () => {
-    setCurrentImage((prev) =>
-      prev === room.images.length - 1 ? 0 : prev + 1
-    );
-  };
+  const nextImage = () => setCurrentImage((prev) =>
+    prev === room.images.length - 1 ? 0 : prev + 1
+  );
+  const prevImage = () => setCurrentImage((prev) =>
+    prev === 0 ? room.images.length - 1 : prev - 1
+  );
 
-  const prevImage = () => {
-    setCurrentImage((prev) =>
-      prev === 0 ? room.images.length - 1 : prev - 1
-    );
+  const adults = searchParams.get('adults');
+  const children = searchParams.get('children');
+
+  // ✅ Clean query string builder (removes empty params)
+  const buildQueryString = () => {
+    const params = new URLSearchParams();
+    if (checkInDate) params.append("checkInDate", checkInDate);
+    if (checkOutDate) params.append("checkOutDate", checkOutDate);
+    if (adults) params.append("adults", adults);
+    if (children) params.append("children", children);
+    return params.toString() ? `?${params.toString()}` : "";
+  };
+  const queryString = buildQueryString();
+
+  // ✅ Handle Book Now click
+  const handleBookNow = (e) => {
+    e.preventDefault();
+    if (!checkInDate || !checkOutDate || !adults || !children) {
+      onBookNow(room); // open modal
+      return;
+    }
+    window.location.href = `/checkout?roomId=${room._id}${queryString}`;
   };
 
   return (
@@ -295,7 +341,6 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams }) {
           </div>
         )}
 
-        {/* Arrows */}
         {room.images?.length > 1 && (
           <>
             <button
@@ -319,9 +364,7 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams }) {
             {room.images.map((_, idx) => (
               <span
                 key={idx}
-                className={`w-2 h-2 rounded-full ${
-                  idx === currentImage ? "bg-white" : "bg-gray-400"
-                }`}
+                className={`w-2 h-2 rounded-full ${idx === currentImage ? "bg-white" : "bg-gray-400"}`}
               />
             ))}
           </div>
@@ -331,9 +374,7 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams }) {
       {/* Details */}
       <div className="flex-1 p-5 flex flex-col justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">
-            {room.title}
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-800">{room.title}</h2>
           <p className="text-sm text-gray-500">
             {room.location?.city}, {room.location?.state}
           </p>
@@ -341,9 +382,7 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams }) {
           {/* ⭐ Rating */}
           <div className="flex items-center mt-2">
             <span className="text-yellow-500 text-lg">★</span>
-            <span className="ml-1 text-sm font-semibold">
-              {room.averageRating ?? 0}
-            </span>
+            <span className="ml-1 text-sm font-semibold">{room.averageRating ?? 0}</span>
             <span className="ml-1 text-xs text-gray-500">
               ({room.totalReviews ?? 0} reviews)
             </span>
@@ -377,14 +416,14 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams }) {
 
         {/* Actions */}
         <div className="mt-5 flex flex-col sm:flex-row gap-3">
-          <a
-            href={`/checkout?roomId=${room._id}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&adults=${searchParams.get('adults')}&children=${searchParams.get('children')}`}
-            className="flex-1 text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-semibold"
+          <button
+            onClick={handleBookNow}
+            className="flex-1 text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-semibold cursor-pointer"
           >
             Book Now
-          </a>
+          </button>
           <a
-            href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}?checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&adults=${searchParams.get('adults')}&children=${searchParams.get('children')}`}
+            href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}${queryString}`}
             className="flex-1 text-center border border-red-500 text-red-500 px-4 py-2 rounded-lg hover:bg-red-50 font-semibold"
           >
             View Details
@@ -397,6 +436,7 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams }) {
 
 export default function SearchPageContent() {
   const searchParams = useSearchParams();
+
   const city = searchParams.get('city');
   const checkInDate = searchParams.get('checkInDate');
   const checkOutDate = searchParams.get('checkOutDate');
@@ -406,22 +446,25 @@ export default function SearchPageContent() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
-
-  // ✅ New state for property search
   const [propertyQuery, setPropertyQuery] = useState("");
 
+  // ✅ Fetch data
   useEffect(() => {
     async function fetchInitial() {
-      if (!city || !checkInDate || !checkOutDate) {
+      if (!city) {
         setRooms([]);
         return;
       }
+
       try {
         setLoading(true);
-        const query = new URLSearchParams({ city, checkInDate, checkOutDate, adults, children });
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE}/rooms/search?${query.toString()}`
-        );
+        const query = new URLSearchParams({ city });
+        if (checkInDate) query.set('checkInDate', checkInDate);
+        if (checkOutDate) query.set('checkOutDate', checkOutDate);
+        if (adults) query.set('adults', adults);
+        if (children) query.set('children', children);
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/search?${query.toString()}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed to fetch rooms');
         setRooms(data);
@@ -461,7 +504,7 @@ export default function SearchPageContent() {
     }
   }
 
-  // ✅ Filtered rooms by propertyQuery
+  // ✅ Property name search filter
   const filteredRooms = useMemo(() => {
     if (!propertyQuery.trim()) return rooms;
     return rooms.filter((room) =>
@@ -473,7 +516,6 @@ export default function SearchPageContent() {
     <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
       {/* Sidebar */}
       <div className="md:col-span-1 space-y-6 lg:pt-[54px] md:pt-[54px]">
-        {/* ✅ Property name search input above Filters */}
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">
             Search By Property Name
@@ -487,7 +529,6 @@ export default function SearchPageContent() {
           />
         </div>
 
-        {/* Filters component */}
         <Filters onApply={handleFilterApply} />
       </div>
 
@@ -512,12 +553,14 @@ export default function SearchPageContent() {
                 checkInDate={checkInDate}
                 checkOutDate={checkOutDate}
                 searchParams={searchParams}
+                onBookNow={(room) => setSelectedRoom(room)}
               />
             ))}
           </div>
         )}
       </div>
 
+      {/* ✅ Booking modal */}
       {selectedRoom && (
         <BookingModal
           room={selectedRoom}
