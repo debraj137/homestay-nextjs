@@ -71,7 +71,7 @@ export default function PremiumHomestays() {
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-10 text-center">
           Our Premium Homestay
         </h2>
 
@@ -99,7 +99,7 @@ export default function PremiumHomestays() {
                     />
                     <div className="p-4 flex flex-col space-y-2">
                       <div className="flex justify-between items-center">
-                        <h4 className="font-semibold text-lg truncate">
+                        <h4 className="font-semibold text-lg text-gray-900 truncate leading-snug">
                           <Link
                             href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}`}
                             className="hover:text-red-500 transition-colors duration-200"

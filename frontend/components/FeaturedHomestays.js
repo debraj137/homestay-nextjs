@@ -6,7 +6,7 @@ export default function FeaturedHomestays() {
     <section className="py-16 bg-gray-50 text-center">
       <div className="max-w-3xl mx-auto px-6">
         {/* Heading */}
-        <h2 className="text-3xl md:text-4xl font-bold mb-3">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
           Featured Homestays
         </h2>
 

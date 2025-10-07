@@ -113,7 +113,7 @@ export default function Banner() {
     <section
       className="relative min-h-[100vh] md:h-[100vh] flex items-center justify-center text-center text-white pt-16"
       style={{
-        backgroundImage: "url('/hero.jpg')",
+        backgroundImage: "url('/hero.webp')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
