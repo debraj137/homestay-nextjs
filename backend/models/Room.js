@@ -12,6 +12,7 @@ const roomSchema = new mongoose.Schema({
     pincode: { type: String, required: true }
   },
   price: { type: Number, required: true },
+  discount: { type: Number, default: 0 },
   images: [{ type: String }],
   amenities: [{ type: String }],
   // maximumAllowedGuest: {type: Number,required: true,min: 1},

@@ -43,7 +43,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="h-screen flex items-center justify-center bg-cover bg-center relative"
+      className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-cover bg-center relative"
       style={{
         backgroundImage: "url('/bed.jpg')", // 👈 put your image inside /public folder
       }}
