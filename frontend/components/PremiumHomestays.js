@@ -184,12 +184,19 @@ export default function PremiumHomestays() {
       title: 'Gold Rooms',
       icon: '🌟',
       color: 'text-yellow-700',
+      // color: 'text-green-600',
+      saveColor: 'text-green-600',
       underline: 'border-yellow-500',
-      badge: 'bg-yellow-100 text-yellow-800',
-      priceColor: 'text-yellow-700',
-      bookBtn: 'bg-yellow-500 hover:bg-yellow-600',
-      outlineBtn: 'border-yellow-500 text-yellow-600 hover:bg-yellow-50',
-      tagBg: 'bg-yellow-50 text-yellow-700',
+      // badge: 'bg-yellow-100 text-yellow-800',
+      badge: 'bg-gray-200 text-gray-700',
+      // priceColor: 'text-yellow-700',
+      priceColor: 'text-red-600',
+      // bookBtn: 'bg-yellow-500 hover:bg-yellow-600',
+      bookBtn: 'bg-gray-700 hover:bg-gray-800',
+      // outlineBtn: 'border-yellow-500 text-yellow-600 hover:bg-yellow-50',
+      outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
+      // tagBg: 'bg-yellow-50 text-yellow-700',
+      tagBg: 'bg-gray-100 text-gray-700',
       discountBadge: 'bg-yellow-500 text-white',
     },
     {
@@ -197,9 +204,11 @@ export default function PremiumHomestays() {
       title: 'Silver Rooms',
       icon: '🥈',
       color: 'text-gray-700',
+      // color: 'text-green-600',
+      saveColor: 'text-green-600',
       underline: 'border-gray-400',
       badge: 'bg-gray-200 text-gray-700',
-      priceColor: 'text-gray-700',
+      priceColor: 'text-red-600',
       bookBtn: 'bg-gray-700 hover:bg-gray-800',
       outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
       tagBg: 'bg-gray-100 text-gray-700',
@@ -210,12 +219,19 @@ export default function PremiumHomestays() {
       title: 'Diamond Rooms',
       icon: '💎',
       color: 'text-purple-700',
+      // color: 'text-green-600',
+      saveColor: 'text-green-600',
       underline: 'border-purple-600',
-      badge: 'bg-purple-100 text-purple-700',
-      priceColor: 'text-purple-700',
-      bookBtn: 'bg-purple-600 hover:bg-purple-700',
-      outlineBtn: 'border-purple-600 text-purple-700 hover:bg-purple-50',
-      tagBg: 'bg-purple-50 text-purple-700',
+      // badge: 'bg-purple-100 text-purple-700',
+      badge: 'bg-gray-200 text-gray-700',
+      // priceColor: 'text-purple-700',
+      priceColor: 'text-red-600',
+      // bookBtn: 'bg-purple-600 hover:bg-purple-700',
+      bookBtn: 'bg-gray-700 hover:bg-gray-800',
+      // outlineBtn: 'border-purple-600 text-purple-700 hover:bg-purple-50',
+      outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
+      // tagBg: 'bg-purple-50 text-purple-700',
+      tagBg: 'bg-gray-100 text-gray-700',
       discountBadge: 'bg-purple-600 text-white',
     },
   ];
@@ -289,7 +305,7 @@ export default function PremiumHomestays() {
                         />
                         {hasDiscount && (
                           <div
-                            className={`absolute top-2 left-2 ${cat.discountBadge} text-xs font-semibold px-3 py-1 rounded-full shadow-md`}
+                            className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-md shadow-md"
                           >
                             {room.discountPercentage}% OFF
                           </div>
@@ -325,16 +341,16 @@ export default function PremiumHomestays() {
                             </p>
                             <p className={`font-bold text-lg ${cat.priceColor}`}>
                               ₹{discountedPrice.toLocaleString('en-IN')}
-                              <span className="text-sm text-gray-500"> / night</span>
+                              <span className="text-sm text-red-600"> / night</span>
                             </p>
-                            <p className={`text-sm font-semibold ${cat.color}`}>
+                            <p className={`text-sm font-semibold ${cat.saveColor}`}>
                               Save ₹{savedAmount.toLocaleString('en-IN')}
                             </p>
                           </div>
                         ) : (
                           <p className={`font-bold ${cat.priceColor}`}>
                             ₹{price.toLocaleString('en-IN')}
-                            <span className="text-gray-600 text-sm font-normal">
+                            <span className="text-red-600 text-sm font-normal">
                               {' '}
                               / night
                             </span>

@@ -173,13 +173,13 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams, onBookN
         <div className="mt-5 flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleBookNow}
-            className="flex-1 text-center bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 font-semibold cursor-pointer"
+            className="flex-1 text-center bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-semibold cursor-pointer"
           >
             Book Now
           </button>
           <a
             href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}${queryString}`}
-            className="flex-1 text-center border border-red-500 text-red-500 px-4 py-2 rounded-lg hover:bg-red-50 font-semibold"
+            className="flex-1 text-center border border-gray-500 text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-50 font-semibold"
           >
             View Details
           </a>

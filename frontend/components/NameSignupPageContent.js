@@ -66,7 +66,7 @@ export default function NameSignupPage() {
               type="submit"
               disabled={loading}
               className={`cursor-pointer w-full font-medium py-2 rounded-md text-sm transition 
-              ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600 text-white"}`}
+              ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-gray-700 hover:bg-gray-800 text-white"}`}
             >
               {loading ? "Saving..." : "Continue"}
             </button>

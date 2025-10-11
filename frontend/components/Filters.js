@@ -143,7 +143,7 @@ export default function Filters({ onApply }) {
           max="2500"
           value={price}
           onChange={(e) => setPrice(Number(e.target.value))}
-          className="w-full accent-red-500"
+          className="w-full accent-gray-700"
         />
         <p className="text-sm text-gray-600 mt-1">Up to ₹{price}</p>
       </div>
@@ -193,7 +193,7 @@ export default function Filters({ onApply }) {
       {/* Apply Button */}
       <button
         onClick={handleApply}
-        className="w-full bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600"
+        className="w-full text-white py-2 rounded-lg font-semibold bg-gray-700 hover:bg-gray-800 cursor-pointer"
       >
         Apply Filters
       </button>

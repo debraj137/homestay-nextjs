@@ -70,9 +70,9 @@ export default function Header() {
               <span>Login / Signup</span>
             </Link>
           ) : (
-            <button onClick={handleLogout} className="flex items-center space-x-1 hover:text-red-500">
+            <button onClick={handleLogout} className="flex items-center space-x-1 hover:text-red-500 cursonr-pointer">
               <LogOut className="h-4 w-4" />
-              <span>Logout</span>
+              <span className='cursor-pointer'>Logout</span>
             </button>
           )}
         </nav>

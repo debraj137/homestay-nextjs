@@ -322,7 +322,7 @@ export default function RoomDetailsPage() {
 
       {/* 🔘 Book Now */}
       <button
-        className="cursor-pointer px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600"
+        className="cursor-pointer px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold"
         onClick={handleBookNow}
       >
         Book Now

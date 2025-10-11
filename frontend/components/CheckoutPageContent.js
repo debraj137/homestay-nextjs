@@ -177,7 +177,7 @@ export default function CheckoutPageContent() {
       <button
         onClick={handleBooking}
         disabled={bookingLoading}
-        className={`w-full px-6 py-3 rounded-lg font-semibold text-white ${bookingLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'
+        className={`w-full px-6 py-3 rounded-lg font-semibold text-white ${bookingLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-800 cursor-pointer'
           }`}
       >
         {bookingLoading ? 'Processing...' : 'Confirm Booking'}

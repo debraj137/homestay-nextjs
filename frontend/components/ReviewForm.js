@@ -92,7 +92,7 @@ export default function ReviewForm({ roomId, onReviewAdded }) {
         className={`w-full py-2 rounded-lg font-semibold ${
           loading
             ? "bg-gray-400 text-white cursor-not-allowed"
-            : "bg-red-500 text-white hover:bg-red-600 cursor-pointer"
+            : "text-white bg-gray-700 hover:bg-gray-800 cursor-pointer"
         }`}
       >
         {loading ? "Submitting..." : "Submit Review"}

@@ -338,7 +338,7 @@ export default function BookingModal({ room, onClose }) {
           disabled={!!error}
           className={`w-full py-2 rounded-lg font-semibold ${error
               ? 'bg-gray-400 text-white cursor-not-allowed'
-              : 'bg-red-500 text-white hover:bg-red-600 cursor-pointer'
+              : 'bg-gray-700 hover:bg-gray-800 text-white cursor-pointer'
             }`}
         >
           Proceed To Checkout
