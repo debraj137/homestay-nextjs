@@ -317,7 +317,7 @@ export default function PremiumHomestays() {
                         <div className="flex justify-between items-center">
                           <h4 className="font-semibold text-lg text-gray-900 truncate leading-snug">
                             <Link
-                              href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}`}
+                              href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
                               className="hover:text-red-500 transition-colors duration-200"
                             >
                               {room.title}
@@ -378,7 +378,7 @@ export default function PremiumHomestays() {
                             Book Now
                           </button>
                           <a
-                            href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}`}
+                            href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
                             className={`flex-1 px-4 py-2 border text-sm font-semibold rounded-lg text-center ${cat.outlineBtn}`}
                           >
                             View Details

@@ -266,7 +266,7 @@ export default function HomestaysPage() {
                     <div>
                       <h2 className="text-lg font-bold">
                         <Link
-                          href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}`}
+                          href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
                           className="hover:underline hover:text-red-600"
                         >
                           {room.title}
@@ -319,7 +319,7 @@ export default function HomestaysPage() {
                     {/* View Details Button */}
                     <div className="mt-4 flex space-x-2">
                       <a
-                        href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}`}
+                        href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
                         className="flex-1 text-center bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded cursor-pointer transition"
                       >
                         View Details

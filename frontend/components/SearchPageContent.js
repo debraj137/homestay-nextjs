@@ -117,7 +117,7 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams, onBookN
         <div>
           <h2 className="text-xl font-semibold text-gray-800">
             <a
-              href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}${queryString}`}
+              href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}${queryString}`}
               className="hover:text-red-500 transition-colors duration-200"
             >
               {room.title}
@@ -178,7 +178,7 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams, onBookN
             Book Now
           </button>
           <a
-            href={`/rooms/${slugify(room.title, { lower: true })}/${room._id}${queryString}`}
+            href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}${queryString}`}
             className="flex-1 text-center border border-gray-500 text-gray-500 px-4 py-2 rounded-lg hover:bg-gray-50 font-semibold"
           >
             View Details
