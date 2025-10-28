@@ -88,8 +88,15 @@ export default function MyBookingsPage() {
                   {/* Dates */}
                   <p className="flex items-center text-xs text-gray-700">
                     <Calendar className="h-3 w-3 mr-1" />
-                    {new Date(booking.checkInDate).toLocaleDateString()} →{' '}
-                    {new Date(booking.checkOutDate).toLocaleDateString()}
+                    {booking.bookingType === 'hourly' ? (
+                      <>
+                        {new Date(booking.checkInDate).toLocaleString()} → {new Date(booking.checkOutDate).toLocaleString()} ({booking.durationHours} hrs)
+                      </>
+                    ) : (
+                      <>
+                        {new Date(booking.checkInDate).toLocaleDateString()} → {new Date(booking.checkOutDate).toLocaleDateString()}
+                      </>
+                    )}
                   </p>
 
                   {/* Guests */}
@@ -101,11 +108,10 @@ export default function MyBookingsPage() {
                   {/* Footer */}
                   <div className="mt-3 flex items-center justify-between">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        booking.status === 'confirmed'
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${booking.status === 'confirmed'
                           ? 'bg-green-100 text-green-700'
                           : 'bg-red-100 text-red-700'
-                      }`}
+                        }`}
                     >
                       {booking.status}
                     </span>

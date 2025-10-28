@@ -49,14 +49,24 @@
 //   if (loading) return <p className="text-gray-600">Loading...</p>;
 //   if (!room) return <p className="text-gray-600">Room not found</p>;
 
+//   // ✅ Discount logic
+//   const price = Number(room.price) || 0;
+//   const discountedPrice = Number(room.discountedPrice) || 0;
+//   const discountPercentage = room.discountPercentage
+//     ? Number(room.discountPercentage)
+//     : discountedPrice && discountedPrice < price
+//       ? Math.round(((price - discountedPrice) / price) * 100)
+//       : 0;
+
+//   const hasDiscount = discountPercentage > 0 && discountedPrice < price;
+//   const savedAmount = hasDiscount ? price - discountedPrice : 0;
+
 //   function handleBookNow() {
 //     if (checkInDate && checkOutDate && adults && children) {
-//       // ✅ navigate directly to checkout
 //       router.push(
 //         `/checkout?roomId=${room._id}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&adults=${adults}&children=${children}`
 //       );
 //     } else {
-//       // ✅ open modal if no query params
 //       setShowModal(true);
 //     }
 //   }
@@ -65,16 +75,24 @@
 //     <div className="max-w-5xl mx-auto px-4 py-8">
 //       <h1 className="text-3xl font-bold mb-4">{room.title}</h1>
 
-//       {/* Main Image */}
-//       {mainImage && (
-//         <img
-//           src={mainImage}
-//           alt={room.title}
-//           className="w-full h-96 object-cover rounded-lg mb-6"
-//         />
-//       )}
+//       {/* 🖼️ Main Image with Discount Badge */}
+//       <div className="relative mb-6">
+//         {mainImage && (
+//           <img
+//             src={mainImage}
+//             alt={room.title}
+//             className="w-full h-96 object-cover rounded-lg"
+//           />
+//         )}
 
-//       {/* Thumbnails */}
+//         {hasDiscount && (
+//           <div className="absolute top-3 left-3 bg-red-600 text-white text-sm font-semibold px-3 py-1 rounded-md shadow-md">
+//             {discountPercentage}% OFF
+//           </div>
+//         )}
+//       </div>
+
+//       {/* 🖼️ Thumbnails */}
 //       <div className="flex space-x-2 mb-6">
 //         {room.images?.map((img, idx) => (
 //           <img
@@ -88,27 +106,39 @@
 //         ))}
 //       </div>
 
-//       {/* Description */}
+//       {/* 📝 Description */}
 //       <p className="text-gray-700 mb-6">{room.description}</p>
 
-//       {/* Details */}
+//       {/* 🏷️ Details */}
 //       <div className="space-y-2 mb-6">
 //         <p><strong>Location:</strong> {room.location?.city}, {room.location?.state}</p>
-//         <p><strong>Price:</strong> ₹{room.price}</p>
+
+//         {/* 💰 Discounted Price Section */}
+//         {hasDiscount ? (
+//           <p className="text-lg">
+//             <strong>Price:</strong>{' '}
+//             <span className="line-through text-gray-400">₹{price.toLocaleString('en-IN')}</span>{' '}
+//             <span className="text-red-600 font-bold">₹{discountedPrice.toLocaleString('en-IN')}</span>{' '}
+//             <span className="text-green-600 font-semibold">(Save ₹{savedAmount.toLocaleString('en-IN')})</span>
+//           </p>
+//         ) : (
+//           <p><strong>Price:</strong> ₹{price.toLocaleString('en-IN')}</p>
+//         )}
+
 //         <p><strong>Amenities:</strong> {room.amenities?.join(', ') || 'N/A'}</p>
 //         <p><strong>Max Adult Allowed:</strong> {room.maximumAllowedAdult}</p>
 //         <p><strong>Max Child Allowed:</strong> {room.maximumAllowedChild}</p>
 //       </div>
 
-//       {/* Book Now */}
+//       {/* 🔘 Book Now */}
 //       <button
-//         className="cursor-pointer px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600"
+//         className="cursor-pointer px-6 py-3 bg-gray-700 hover:bg-gray-800 text-white rounded-lg font-semibold"
 //         onClick={handleBookNow}
 //       >
 //         Book Now
 //       </button>
 
-//       {/* Booking Modal */}
+//       {/* 🏨 Booking Modal */}
 //       {showModal && (
 //         <BookingModal
 //           room={room}
@@ -116,10 +146,10 @@
 //         />
 //       )}
 
-//       {/* Review Summary */}
+//       {/* ⭐ Review Summary */}
 //       <ReviewSummary roomId={room._id} />
 
-//       {/* Reviews */}
+//       {/* 💬 Reviews Section */}
 //       <div className="mt-12">
 //         <h2 className="text-2xl font-bold mb-6">Guest Reviews</h2>
 
@@ -132,7 +162,7 @@
 //                 key={review._id}
 //                 className="bg-white rounded-lg shadow-md p-5 border border-gray-200"
 //               >
-//                 {/* Header: Name + Date */}
+//                 {/* Reviewer Header */}
 //                 <div className="flex items-center justify-between mb-2">
 //                   <p className="font-semibold text-gray-800">
 //                     {review.userId?.name || "Anonymous"}
@@ -142,7 +172,7 @@
 //                   </span>
 //                 </div>
 
-//                 {/* Rating */}
+//                 {/* ⭐ Rating */}
 //                 <div className="flex items-center mb-2">
 //                   {Array.from({ length: 5 }).map((_, idx) => (
 //                     <svg
@@ -151,8 +181,7 @@
 //                       fill={idx < review.rating ? "currentColor" : "none"}
 //                       viewBox="0 0 24 24"
 //                       stroke="currentColor"
-//                       className={`w-5 h-5 ${idx < review.rating ? "text-yellow-400" : "text-gray-300"
-//                         }`}
+//                       className={`w-5 h-5 ${idx < review.rating ? "text-yellow-400" : "text-gray-300"}`}
 //                     >
 //                       <path
 //                         strokeLinecap="round"
@@ -164,14 +193,14 @@
 //                   ))}
 //                 </div>
 
-//                 {/* Comment */}
+//                 {/* Review Comment */}
 //                 <p className="text-gray-700">{review.comment}</p>
 //               </div>
 //             ))}
 //           </div>
 //         )}
 
-//         {/* Review Form (only for logged-in users) */}
+//         {/* ✍️ Review Form */}
 //         <div className="mt-8">
 //           <ReviewForm
 //             roomId={room._id}
@@ -179,15 +208,9 @@
 //           />
 //         </div>
 //       </div>
-
 //     </div>
 //   );
 // }
-
-
-
-
-
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
@@ -304,16 +327,65 @@ export default function RoomDetailsPage() {
         <p><strong>Location:</strong> {room.location?.city}, {room.location?.state}</p>
 
         {/* 💰 Discounted Price Section */}
-        {hasDiscount ? (
-          <p className="text-lg">
-            <strong>Price:</strong>{' '}
-            <span className="line-through text-gray-400">₹{price.toLocaleString('en-IN')}</span>{' '}
-            <span className="text-red-600 font-bold">₹{discountedPrice.toLocaleString('en-IN')}</span>{' '}
-            <span className="text-green-600 font-semibold">(Save ₹{savedAmount.toLocaleString('en-IN')})</span>
-          </p>
-        ) : (
-          <p><strong>Price:</strong> ₹{price.toLocaleString('en-IN')}</p>
-        )}
+        {(() => {
+          const bookingType = searchParams.get("bookingType");
+          const hours = Number(searchParams.get("hours")) || 0;
+
+          const price = Number(room.price) || 0;
+          const discountedPrice = Number(room.discountedPrice) || 0;
+          const hasDiscount = discountedPrice && discountedPrice < price;
+          const basePrice = hasDiscount ? discountedPrice : price;
+
+          // ✅ Hourly price formula (same as SearchPageContent)
+          const getHourlyPrice = (hours) => {
+            if (hours <= 3) {
+              return basePrice / 4;
+            }
+            const extraHours = hours - 3;
+            return (basePrice / 4) + ((basePrice / 12) * extraHours);
+          };
+
+          // ✅ Hourly booking display
+          if (bookingType === "hourly" && hours > 0) {
+            const total = Math.round(getHourlyPrice(hours));
+            return (
+              <p className="text-lg">
+                <strong>Price:</strong>{" "}
+                <span className="text-red-600 font-bold">
+                  ₹{total.toLocaleString("en-IN")}
+                </span>{" "}
+                <span className="text-gray-500 text-sm">
+                  ({hours} hour{hours > 1 ? "s" : ""})
+                </span>
+              </p>
+            );
+          }
+
+          // ✅ Full-day booking display (existing logic)
+          if (hasDiscount) {
+            const savedAmount = price - discountedPrice;
+            return (
+              <p className="text-lg">
+                <strong>Price:</strong>{" "}
+                <span className="line-through text-gray-400">
+                  ₹{price.toLocaleString("en-IN")}
+                </span>{" "}
+                <span className="text-red-600 font-bold">
+                  ₹{discountedPrice.toLocaleString("en-IN")}
+                </span>{" "}
+                <span className="text-green-600 font-semibold">
+                  (Save ₹{savedAmount.toLocaleString("en-IN")})
+                </span>
+              </p>
+            );
+          } else {
+            return (
+              <p>
+                <strong>Price:</strong> ₹{price.toLocaleString("en-IN")}
+              </p>
+            );
+          }
+        })()}
 
         <p><strong>Amenities:</strong> {room.amenities?.join(', ') || 'N/A'}</p>
         <p><strong>Max Adult Allowed:</strong> {room.maximumAllowedAdult}</p>

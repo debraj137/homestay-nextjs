@@ -1,161 +1,224 @@
 // 'use client';
-// import { useState } from 'react';
+// import { useState, useEffect, useRef } from 'react';
 // import { useSearchParams, useRouter } from 'next/navigation';
+// import { DateRange } from 'react-date-range';
+// import { format, addDays } from 'date-fns';
+// import { Plus, Minus } from 'lucide-react';
+// import 'react-date-range/dist/styles.css';
+// import 'react-date-range/dist/theme/default.css';
 
 // export default function BookingModal({ room, onClose }) {
 //   const searchParams = useSearchParams();
 //   const router = useRouter();
 
-//   // ✅ Try to read dates from URL
-//   const initialCheckIn = searchParams.get('checkInDate') || '';
-//   const initialCheckOut = searchParams.get('checkOutDate') || '';
+//   const bookingType = searchParams.get('bookingType') || 'full';
+//   const initialStart = searchParams.get('checkInDate')
+//     ? new Date(searchParams.get('checkInDate'))
+//     : new Date();
+//   const initialEnd = addDays(initialStart, 1);
 
-//   const [step, setStep] = useState(initialCheckIn && initialCheckOut ? 'guests' : 'dates');
-//   const [checkInDate, setCheckInDate] = useState(initialCheckIn);
-//   const [checkOutDate, setCheckOutDate] = useState(initialCheckOut);
-
-//   const [adults, setAdults] = useState(1);
-//   const [children, setChildren] = useState(0);
+//   const [dateRange, setDateRange] = useState([
+//     { startDate: initialStart, endDate: initialEnd, key: 'selection' },
+//   ]);
+//   const [checkInTime, setCheckInTime] = useState(searchParams.get('checkInTime') || '11:00 AM');
+//   const [hours, setHours] = useState(Number(searchParams.get('hours')) || 2);
+//   const [adults, setAdults] = useState(Number(searchParams.get('adults')) || 1);
+//   const [children, setChildren] = useState(Number(searchParams.get('children')) || 0);
+//   const [showCalendar, setShowCalendar] = useState(false);
 //   const [error, setError] = useState('');
-//     // ✅ Get today's date in yyyy-mm-dd format
-//   const today = new Date().toISOString().split('T')[0];
 
-//   // ✅ Validation function
-//   const validateGuests = (adultsCount, childrenCount) => {
-//     if (
-//       adultsCount > room.maximumAllowedAdult ||
-//       childrenCount > room.maximumAllowedChild
-//     ) {
-//       setError(
-//         `Number of guests exceeds the room’s capacity (${room.maximumAllowedAdult} adults & ${room.maximumAllowedChild} children).`
-//       );
-//     } else {
-//       setError('');
+//   const calendarRef = useRef(null);
+
+//   useEffect(() => {
+//     function handleClickOutside(event) {
+//       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+//         setShowCalendar(false);
+//       }
 //     }
-//   };
+//     if (showCalendar) document.addEventListener('mousedown', handleClickOutside);
+//     else document.removeEventListener('mousedown', handleClickOutside);
+//     return () => document.removeEventListener('mousedown', handleClickOutside);
+//   }, [showCalendar]);
 
-//   const handleAdultsChange = (value) => {
-//     const newAdults = Number(value);
-//     setAdults(newAdults);
-//     validateGuests(newAdults, children);
-//   };
-
-//   const handleChildrenChange = (value) => {
-//     const newChildren = Number(value);
-//     setChildren(newChildren);
-//     validateGuests(adults, newChildren);
-//   };
-
-//   const handleNextStep = () => {
-//     if (!checkInDate || !checkOutDate) return;
-//     setStep('guests');
-//   };
+//   // Validate guest limits
+//   useEffect(() => {
+//     if (adults > room.maximumAllowedAdult || children > room.maximumAllowedChild) {
+//       setError(
+//         `Exceeds capacity (${room.maximumAllowedAdult} adults & ${room.maximumAllowedChild} children)`
+//       );
+//     } else setError('');
+//   }, [adults, children, room]);
 
 //   const handleCheckout = () => {
 //     if (error) return;
 
-//     router.push(
-//       `/checkout?roomId=${room._id}&checkInDate=${checkInDate}&checkOutDate=${checkOutDate}&adults=${adults}&children=${children}`
-//     );
+//     const startDate = format(dateRange[0].startDate, 'yyyy-MM-dd');
+//     const endDate =
+//       bookingType === 'hourly'
+//         ? format(dateRange[0].startDate, 'yyyy-MM-dd') // hourly same-day booking
+//         : format(dateRange[0].endDate, 'yyyy-MM-dd');
+
+//     const qs = new URLSearchParams({
+//       roomId: room._id,
+//       bookingType,
+//       checkInDate: startDate,
+//       checkOutDate: endDate,
+//       adults,
+//       children,
+//     });
+
+//     if (bookingType === 'hourly') {
+//       qs.set('checkInTime', checkInTime);
+//       qs.set('hours', hours);
+//     }
+
+//     router.push(`/checkout?${qs.toString()}`);
 //     onClose();
 //   };
 
 //   return (
 //     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
 //       <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-//         {/* Close Button */}
-//         <button
-//           onClick={onClose}
-//           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-//         >
+//         <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
 //           ✕
 //         </button>
 
-//         <h2 className="text-xl font-bold mb-4">Book {room.title}</h2>
+//         <h2 className="text-xl font-bold mb-4">
+//           Book {room.title} ({bookingType === 'hourly' ? 'Hourly Stay' : 'Full-Day Stay'})
+//         </h2>
 
-//         {step === 'dates' && (
+//         {/* Mode-specific UI */}
+//         {bookingType === 'hourly' ? (
 //           <>
+//             {/* Check-In Date */}
 //             <div className="mb-4">
-//               <label className="block text-sm font-medium mb-1">Check-In Date*</label>
+//               <label className="block text-sm font-medium mb-1">Select Date</label>
 //               <input
 //                 type="date"
-//                 min={today} // ✅ prevent past dates
-//                 value={checkInDate}
-//                 onChange={(e) => setCheckInDate(e.target.value)}
-//                 className="w-full px-3 py-2 border rounded bg-gray-100 focus:outline-none"
+//                 value={format(dateRange[0].startDate, 'yyyy-MM-dd')}
+//                 onChange={(e) =>
+//                   setDateRange([{ ...dateRange[0], startDate: new Date(e.target.value) }])
+//                 }
+//                 className="w-full border px-3 py-2 rounded text-gray-700"
+//                 min={format(new Date(), 'yyyy-MM-dd')}
 //               />
 //             </div>
 
+//             {/* Check-In Time */}
 //             <div className="mb-4">
-//               <label className="block text-sm font-medium mb-1">Check-Out Date*</label>
-//               <input
-//                 type="date"
-//                 value={checkOutDate}
-//                 onChange={(e) => setCheckOutDate(e.target.value)}
-//                  min={checkInDate || today} // ✅ prevent before check-in date
-//                 className="w-full px-3 py-2 border rounded bg-gray-100 focus:outline-none"
-//               />
+//               <label className="block text-sm font-medium mb-1">Check-In Time</label>
+//               <select
+//                 className="w-full border px-3 py-2 rounded text-gray-700"
+//                 value={checkInTime}
+//                 onChange={(e) => setCheckInTime(e.target.value)}
+//               >
+//                 {[
+//                   '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM',
+//                   '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
+//                   '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM',
+//                 ].map((t) => (
+//                   <option key={t} value={t}>{t}</option>
+//                 ))}
+//               </select>
 //             </div>
 
-//             <button
-//               onClick={handleNextStep}
-//               className="w-full bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 cursor-pointer"
-//             >
-//               Next
-//             </button>
-//           </>
-//         )}
-
-//         {step === 'guests' && (
-//           <>
-//             {/* Adults Input */}
+//             {/* Duration */}
 //             <div className="mb-4">
-//               <label className="block text-sm font-medium mb-1">Adults*</label>
+//               <label className="block text-sm font-medium mb-1">Duration (hours)</label>
 //               <input
 //                 type="number"
-//                 value={adults}
-//                 onChange={(e) => handleAdultsChange(e.target.value)}
-//                 min="1"
-//                 className="w-full px-3 py-2 border rounded bg-gray-100 focus:outline-none"
+//                 value={hours}
+//                 min={2}
+//                 max={10}
+//                 onChange={(e) => setHours(Number(e.target.value))}
+//                 className="w-full border px-3 py-2 rounded text-gray-700"
 //               />
 //             </div>
-
-//             {/* Children Input */}
-//             <div className="mb-4">
-//               <label className="block text-sm font-medium mb-1">Children*</label>
-//               <input
-//                 type="number"
-//                 value={children}
-//                 onChange={(e) => handleChildrenChange(e.target.value)}
-//                 min="0"
-//                 className="w-full px-3 py-2 border rounded bg-gray-100 focus:outline-none"
-//               />
-//             </div>
-
-//             {/* Error Message */}
-//             {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-
-//             {/* Checkout Button */}
-//             <button
-//               onClick={handleCheckout}
-//               disabled={!!error || !checkInDate || !checkOutDate}
-//               className={`w-full py-2 rounded-lg font-semibold ${
-//                 error
-//                   ? 'bg-gray-400 text-white cursor-not-allowed'
-//                   : 'bg-red-500 text-white hover:bg-red-600 cursor-pointer'
-//               }`}
-//             >
-//               Proceed To Checkout
-//             </button>
 //           </>
+//         ) : (
+//           // Full-day mode
+//           <div className="mb-4 relative" ref={calendarRef}>
+//             <label className="block text-sm font-medium mb-1">Dates</label>
+//             <button
+//               type="button"
+//               onClick={() => setShowCalendar(!showCalendar)}
+//               className="w-full px-3 py-2 border rounded text-left bg-gray-100"
+//             >
+//               {`${format(dateRange[0].startDate, 'dd/MM/yyyy')} → ${format(
+//                 dateRange[0].endDate,
+//                 'dd/MM/yyyy'
+//               )}`}
+//             </button>
+//             {showCalendar && (
+//               <div className="mt-4 w-full">
+//                 <div className="bg-white shadow-lg rounded p-2 w-full sm:w-[340px] mx-auto">
+//                   <DateRange
+//                     ranges={dateRange}
+//                     onChange={(item) => setDateRange([item.selection])}
+//                     moveRangeOnFirstSelection={false}
+//                     minDate={new Date()}
+//                     className="text-black w-full"
+//                   />
+//                   <div className="p-2 text-right">
+//                     <button
+//                       onClick={() => setShowCalendar(false)}
+//                       className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600 cursor-pointer"
+//                     >
+//                       Done
+//                     </button>
+//                   </div>
+//                 </div>
+//               </div>
+//             )}
+//           </div>
 //         )}
+
+//         {/* Guests */}
+//         <div className="flex gap-2 mb-4">
+//           <div className="flex flex-col w-1/2">
+//             <label className="text-xs font-semibold text-gray-600 mb-1">Adults</label>
+//             <div className="flex items-center justify-between border rounded px-2 h-[44px]">
+//               <button type="button" onClick={() => setAdults(Math.max(1, adults - 1))}>
+//                 <Minus className="h-4 w-4" />
+//               </button>
+//               <span className="text-sm font-medium">{adults}</span>
+//               <button type="button" onClick={() => setAdults(adults + 1)}>
+//                 <Plus className="h-4 w-4" />
+//               </button>
+//             </div>
+//           </div>
+
+//           <div className="flex flex-col w-1/2">
+//             <label className="text-xs font-semibold text-gray-600 mb-1">Children</label>
+//             <div className="flex items-center justify-between border rounded px-2 h-[44px]">
+//               <button type="button" onClick={() => setChildren(Math.max(0, children - 1))}>
+//                 <Minus className="h-4 w-4" />
+//               </button>
+//               <span className="text-sm font-medium">{children}</span>
+//               <button type="button" onClick={() => setChildren(children + 1)}>
+//                 <Plus className="h-4 w-4" />
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+
+//         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+
+//         <button
+//           onClick={handleCheckout}
+//           disabled={!!error}
+//           className={`w-full py-2 rounded-lg font-semibold ${
+//             error
+//               ? 'bg-gray-400 text-white cursor-not-allowed'
+//               : 'bg-gray-700 hover:bg-gray-800 text-white cursor-pointer'
+//           }`}
+//         >
+//           Proceed To Checkout
+//         </button>
 //       </div>
 //     </div>
 //   );
 // }
-
-
-
 
 'use client';
 import { useState, useEffect, useRef } from 'react';
@@ -170,135 +233,192 @@ export default function BookingModal({ room, onClose }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // ✅ Initialize from URL or fallback to today → tomorrow
+  // ✅ Read preselected values from URL
+  const bookingType = searchParams.get('bookingType') || 'full';
   const initialStart = searchParams.get('checkInDate')
     ? new Date(searchParams.get('checkInDate'))
     : new Date();
-  const initialEnd = searchParams.get('checkOutDate')
-    ? new Date(searchParams.get('checkOutDate'))
-    : addDays(new Date(), 1);
+  const initialEnd = addDays(initialStart, 1);
+  const preselectedTime = searchParams.get('checkInTime') || '11:00 AM';
+  const preselectedHours = Number(searchParams.get('hours')) || 2;
 
+  // ✅ State variables
   const [dateRange, setDateRange] = useState([
     { startDate: initialStart, endDate: initialEnd, key: 'selection' },
   ]);
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [error, setError] = useState('');
+  const [checkInTime, setCheckInTime] = useState(preselectedTime);
+  const [hours, setHours] = useState(preselectedHours);
+  const [adults, setAdults] = useState(Number(searchParams.get('adults')) || 1);
+  const [children, setChildren] = useState(Number(searchParams.get('children')) || 0);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [error, setError] = useState('');
 
   const calendarRef = useRef(null);
 
-  // ✅ Close calendar if clicked outside
+  // ✅ Close calendar when clicked outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
         setShowCalendar(false);
       }
     }
-    if (showCalendar) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
+    if (showCalendar) document.addEventListener('mousedown', handleClickOutside);
+    else document.removeEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showCalendar]);
 
-  // ✅ Validation
+  // ✅ Validate guest limits
   useEffect(() => {
-    if (
-      adults > room.maximumAllowedAdult ||
-      children > room.maximumAllowedChild
-    ) {
+    if (adults > room.maximumAllowedAdult || children > room.maximumAllowedChild) {
       setError(
-        `Exceeds room capacity (${room.maximumAllowedAdult} adults & ${room.maximumAllowedChild} children)`
+        `Exceeds capacity (${room.maximumAllowedAdult} adults & ${room.maximumAllowedChild} children)`
       );
-    } else {
-      setError('');
-    }
+    } else setError('');
   }, [adults, children, room]);
 
+  // ✅ Handle checkout navigation
   const handleCheckout = () => {
     if (error) return;
-    const startDate = format(dateRange[0].startDate, 'yyyy-MM-dd');
-    const endDate = format(dateRange[0].endDate, 'yyyy-MM-dd');
 
-    router.push(
-      `/checkout?roomId=${room._id}&checkInDate=${startDate}&checkOutDate=${endDate}&adults=${adults}&children=${children}`
-    );
+    const startDate = format(dateRange[0].startDate, 'yyyy-MM-dd');
+    const endDate =
+      bookingType === 'hourly'
+        ? startDate
+        : format(dateRange[0].endDate, 'yyyy-MM-dd');
+
+    const qs = new URLSearchParams({
+      roomId: room._id,
+      bookingType,
+      checkInDate: startDate,
+      checkOutDate: endDate,
+      adults,
+      children,
+    });
+
+    if (bookingType === 'hourly') {
+      qs.set('checkInTime', checkInTime);
+      qs.set('hours', hours);
+    }
+
+    router.push(`/checkout?${qs.toString()}`);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
       <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-        >
+        {/* ❌ Close Button */}
+        <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
           ✕
         </button>
 
-        <h2 className="text-xl font-bold mb-4">Book {room.title}</h2>
+        <h2 className="text-xl font-bold mb-4">
+          Book {room.title} ({bookingType === 'hourly' ? 'Hourly Stay' : 'Full-Day Stay'})
+        </h2>
 
-        {/* Date Picker */}
-        <div className="mb-4 relative" ref={calendarRef}>
-          <label className="block text-sm font-medium mb-1">Dates</label>
-          <button
-            type="button"
-            onClick={() => setShowCalendar(!showCalendar)}
-            className="w-full px-3 py-2 border rounded text-left bg-gray-100"
-          >
-            {`${format(dateRange[0].startDate, 'dd/MM/yyyy')} → ${format(
-              dateRange[0].endDate,
-              'dd/MM/yyyy'
-            )}`}
-          </button>
-          {showCalendar && (
-            <div className="mt-4 w-full">
-              <div className="bg-white shadow-lg rounded p-2 w-full sm:w-[340px] mx-auto">
-                <DateRange
-                  ranges={dateRange}
-                  onChange={(item) => setDateRange([item.selection])}
-                  moveRangeOnFirstSelection={false}
-                  minDate={new Date()}
-                  className="text-black w-full"
-                />
-                {/* ✅ Done Button Below Calendar */}
-                <div className="p-2 text-right">
-                  <button
-                    onClick={() => setShowCalendar(false)}
-                    className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600 cursor-pointer"
-                  >
-                    Done
-                  </button>
+        {/* Mode-specific UI */}
+        {bookingType === 'hourly' ? (
+          <>
+            {/* Date */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Select Date</label>
+              <input
+                type="date"
+                value={format(dateRange[0].startDate, 'yyyy-MM-dd')}
+                onChange={(e) =>
+                  setDateRange([{ ...dateRange[0], startDate: new Date(e.target.value) }])
+                }
+                className="w-full border px-3 py-2 rounded text-gray-700"
+                min={format(new Date(), 'yyyy-MM-dd')}
+              />
+            </div>
+
+            {/* Time */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Check-In Time</label>
+              <select
+                className="w-full border px-3 py-2 rounded text-gray-700"
+                value={checkInTime}
+                onChange={(e) => setCheckInTime(e.target.value)}
+              >
+                {[
+                  '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM',
+                  '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM',
+                  '08:00 PM', '09:00 PM', '10:00 PM',
+                ].map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Duration (Editable now ✅) */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Duration (hours)</label>
+              <select
+                className="w-full border px-3 py-2 rounded text-gray-700"
+                value={hours}
+                onChange={(e) => setHours(Number(e.target.value))}
+              >
+                {[...Array(8)].map((_, i) => {
+                  const val = i + 3;
+                  return (
+                    <option key={val} value={val}>
+                      {val} Hours
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </>
+        ) : (
+          // Full-day mode
+          <div className="mb-4 relative" ref={calendarRef}>
+            <label className="block text-sm font-medium mb-1">Dates</label>
+            <button
+              type="button"
+              onClick={() => setShowCalendar(!showCalendar)}
+              className="w-full px-3 py-2 border rounded text-left bg-gray-100"
+            >
+              {`${format(dateRange[0].startDate, 'dd/MM/yyyy')} → ${format(
+                dateRange[0].endDate,
+                'dd/MM/yyyy'
+              )}`}
+            </button>
+            {showCalendar && (
+              <div className="mt-4 w-full">
+                <div className="bg-white shadow-lg rounded p-2 w-full sm:w-[340px] mx-auto">
+                  <DateRange
+                    ranges={dateRange}
+                    onChange={(item) => setDateRange([item.selection])}
+                    moveRangeOnFirstSelection={false}
+                    minDate={new Date()}
+                    className="text-black w-full"
+                  />
+                  <div className="p-2 text-right">
+                    <button
+                      onClick={() => setShowCalendar(false)}
+                      className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600 cursor-pointer"
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        {/* Adults & Children */}
+        {/* Guests Section */}
         <div className="flex gap-2 mb-4">
           {/* Adults */}
           <div className="flex flex-col w-1/2">
-            <label className="text-xs font-semibold text-gray-600 mb-1">
-              Adults
-            </label>
+            <label className="text-xs font-semibold text-gray-600 mb-1">Adults</label>
             <div className="flex items-center justify-between border rounded px-2 h-[44px]">
-              <button
-                type="button"
-                onClick={() => setAdults(Math.max(1, adults - 1))}
-                className="px-2 text-gray-600 hover:text-black"
-              >
+              <button type="button" onClick={() => setAdults(Math.max(1, adults - 1))}>
                 <Minus className="h-4 w-4" />
               </button>
               <span className="text-sm font-medium">{adults}</span>
-              <button
-                type="button"
-                onClick={() => setAdults(adults + 1)}
-                className="px-2 text-gray-600 hover:text-black"
-              >
+              <button type="button" onClick={() => setAdults(adults + 1)}>
                 <Plus className="h-4 w-4" />
               </button>
             </div>
@@ -306,40 +426,31 @@ export default function BookingModal({ room, onClose }) {
 
           {/* Children */}
           <div className="flex flex-col w-1/2">
-            <label className="text-xs font-semibold text-gray-600 mb-1">
-              Children
-            </label>
+            <label className="text-xs font-semibold text-gray-600 mb-1">Children</label>
             <div className="flex items-center justify-between border rounded px-2 h-[44px]">
-              <button
-                type="button"
-                onClick={() => setChildren(Math.max(0, children - 1))}
-                className="px-2 text-gray-600 hover:text-black"
-              >
+              <button type="button" onClick={() => setChildren(Math.max(0, children - 1))}>
                 <Minus className="h-4 w-4" />
               </button>
               <span className="text-sm font-medium">{children}</span>
-              <button
-                type="button"
-                onClick={() => setChildren(children + 1)}
-                className="px-2 text-gray-600 hover:text-black"
-              >
+              <button type="button" onClick={() => setChildren(children + 1)}>
                 <Plus className="h-4 w-4" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Error */}
+        {/* Error Message */}
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
-        {/* Checkout */}
+        {/* Proceed Button */}
         <button
           onClick={handleCheckout}
           disabled={!!error}
-          className={`w-full py-2 rounded-lg font-semibold ${error
+          className={`w-full py-2 rounded-lg font-semibold ${
+            error
               ? 'bg-gray-400 text-white cursor-not-allowed'
               : 'bg-gray-700 hover:bg-gray-800 text-white cursor-pointer'
-            }`}
+          }`}
         >
           Proceed To Checkout
         </button>
