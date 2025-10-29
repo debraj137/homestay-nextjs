@@ -113,7 +113,7 @@ export default function Header() {
           </div>
 
           <div className="pt-3">
-            <p className="font-medium text-gray-800">0124-6201611</p>
+            <p className="font-medium text-gray-800">+91 9250538645</p>
             <p className="text-sm text-gray-500">Call us to Book now</p>
           </div>
 
