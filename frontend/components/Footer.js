@@ -62,7 +62,7 @@ export default function Footer() {
           <p className="mt-2">
             Phone:{' '}
             <a href="tel:+911234567890" className="text-red-400 hover:text-red-300 transition">
-              +91 123-456-7890
+              +91 9250538645
             </a>
           </p>
           <div className="flex space-x-3 mt-4">

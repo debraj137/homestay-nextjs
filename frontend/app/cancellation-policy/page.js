@@ -18,7 +18,7 @@ export default function CancellationPolicyPage() {
       <h2 className="text-xl font-semibold mt-6 mb-2 text-gray-800">2. Partial Refunds</h2>
       <p className="text-gray-700 mb-4">
         - Cancellations made <strong>7 days before check-in</strong>: 50% refund of total booking amount. <br />
-        - Cancellations made <strong>less than 7 days before check-in</strong>: No refund.
+        {/* - Cancellations made <strong>less than 7 days before check-in</strong>: No refund. */}
       </p>
 
       <h2 className="text-xl font-semibold mt-6 mb-2 text-gray-800">3. No-shows</h2>
@@ -45,7 +45,7 @@ export default function CancellationPolicyPage() {
         </a>{' '}
         or call us at{' '}
         <a href="tel:+911234567890" className="text-red-500 hover:underline">
-          +91 123-456-7890
+          +91 9250538645
         </a>.
       </p>
     </div>

@@ -278,10 +278,10 @@ export default function CheckoutPageContent() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-      toast.success('Booking confirmed!');
+      toast.success('Booking confirmed!', { duration: 5000 });
       router.push('/my-bookings');
     } catch (err) {
-      toast.error(err.message || 'Booking failed');
+      toast.error(err.message || 'Booking failed', { duration: 5000 });
     } finally {
       setBookingLoading(false);
     }
@@ -294,7 +294,7 @@ export default function CheckoutPageContent() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column - Booking Details */}
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-800 border-b pb-2">Booking Summary</h2>
+          <h2 className="text-2xl font-semibold text-[#7a3e1c] border-b pb-2">Booking Summary</h2>
 
           <div className="space-y-3 text-gray-700">
             <p><strong>Room:</strong> {room.title}</p>
@@ -321,7 +321,7 @@ export default function CheckoutPageContent() {
         <div className="space-y-8">
           {/* User Info */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">Your Information</h2>
+            <h2 className="text-2xl font-semibold text-[#7a3e1c] border-b pb-2 mb-4">Your Information</h2>
             <div className="text-gray-700 space-y-2">
               <p><strong>Name:</strong> {user?.name}</p>
               <p><strong>Email:</strong> {user?.email}</p>
@@ -331,7 +331,7 @@ export default function CheckoutPageContent() {
 
           {/* Payment Section */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <h2 className="text-2xl font-semibold text-gray-800 border-b pb-2 mb-4">Select Payment Method</h2>
+            <h2 className="text-2xl font-semibold text-[#7a3e1c] border-b pb-2 mb-4">Select Payment Method</h2>
 
             <div className="space-y-3">
               {['card', 'upi', 'payAtHotel'].map((method) => (

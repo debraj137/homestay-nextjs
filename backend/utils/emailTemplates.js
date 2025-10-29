@@ -2,19 +2,20 @@ function bookingConfirmationTemplate(user, room, booking) {
   return `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border:1px solid #eee; border-radius:8px; overflow:hidden;">
     <!-- Header -->
-    <div style="background:#e50914; color:white; padding:20px; text-align:center;">
+    <div style="background:#7a3e1c; color:white; padding:20px; text-align:center;">
       <h1 style="margin:0;">Awadh Hotels</h1>
       <p style="margin:0; font-size:18px;">Your booking is confirmed ✅</p>
     </div>
 
     <!-- Booking Info -->
     <div style="padding:20px;">
-      <h2 style="color:#e50914; margin-bottom:10px;">Booking Details</h2>
+      <h2 style="color:#7a3e1c; margin-bottom:10px;">Booking Details</h2>
       <p><strong>Booking ID:</strong> ${booking._id}</p>
       <p><strong>Room:</strong> ${room.title}</p>
       <p><strong>Location:</strong> ${room.location?.addressLine1 || ""}, ${room.location?.city || ""}, ${room.location?.state || ""}</p>
       <p><strong>Check-in:</strong> ${new Date(booking.checkInDate).toDateString()}</p>
       <p><strong>Check-out:</strong> ${new Date(booking.checkOutDate).toDateString()}</p>
+      ${booking.bookingType === 'hourly' ? `<p><strong>Duration:</strong> ${booking.hours} Hours</p>` : ''}
       <p><strong>Guests:</strong> ${booking.numberOfAdult} Adults, ${booking.numberOfChild} Children</p>
     </div>
 
@@ -45,18 +46,19 @@ function ownerNotificationTemplate(owner, user, room, booking) {
   return `
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border:1px solid #eee; border-radius:8px; overflow:hidden;">
     <!-- Header -->
-    <div style="background:#e50914; color:white; padding:20px; text-align:center;">
+    <div style="background:#7a3e1c; color:white; padding:20px; text-align:center;">
       <h1 style="margin:0;">Awadh Hotels</h1>
       <p style="margin:0; font-size:18px;">You have a new booking 📩</p>
     </div>
 
     <!-- Booking Info -->
     <div style="padding:20px;">
-      <h2 style="color:#e50914; margin-bottom:10px;">Booking Details</h2>
+      <h2 style="color:#7a3e1c; margin-bottom:10px;">Booking Details</h2>
       <p><strong>Booking ID:</strong> ${booking._id}</p>
       <p><strong>Room:</strong> ${room.title}</p>
       <p><strong>Check-in:</strong> ${new Date(booking.checkInDate).toDateString()}</p>
       <p><strong>Check-out:</strong> ${new Date(booking.checkOutDate).toDateString()}</p>
+      ${booking.bookingType === 'hourly' ? `<p><strong>Duration:</strong> ${booking.hours} Hours</p>` : ''}
       <p><strong>Guest Name:</strong> ${user.name}</p>
       <p><strong>Guests:</strong> ${booking.numberOfAdult} Adults, ${booking.numberOfChild} Children</p>
       <p><strong>Total Price:</strong> ₹${booking.totalPrice}</p>

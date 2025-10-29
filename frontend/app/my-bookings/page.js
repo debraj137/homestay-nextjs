@@ -4,6 +4,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { MapPin, Calendar, Users } from 'lucide-react';
+import Link from "next/link";
+import slugify from "slugify";
 
 export default function MyBookingsPage() {
   const { user } = useAuth();
@@ -60,11 +62,15 @@ export default function MyBookingsPage() {
               >
                 {/* Room Image */}
                 {room?.images?.[0] ? (
-                  <img
-                    src={room.images[0]}
-                    alt={room.title}
-                    className="w-full h-40 object-cover"
-                  />
+                  <Link
+                    href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
+                  >
+                    <img
+                      src={room.images[0]}
+                      alt={room.title}
+                      className="w-full h-40 object-cover"
+                    />
+                  </Link>
                 ) : (
                   <div className="w-full h-40 bg-gray-200 flex items-center justify-center text-gray-500">
                     No Image
@@ -73,7 +79,14 @@ export default function MyBookingsPage() {
 
                 {/* Details */}
                 <div className="p-4">
-                  <h2 className="text-lg font-semibold mb-1">{room?.title}</h2>
+                  <h2 className="text-lg font-semibold mb-1">
+                    <Link
+                      href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
+                      className="hover:text-red-500 transition-colors duration-200"
+                    >
+                      {room?.title}
+                    </Link>
+                  </h2>
 
                   {/* Full Address */}
                   <p className="flex items-start text-xs text-gray-600 mb-2">
@@ -109,11 +122,14 @@ export default function MyBookingsPage() {
                   <div className="mt-3 flex items-center justify-between">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${booking.status === 'confirmed'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
                         }`}
                     >
                       {booking.status}
+                    </span>
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                      {booking.bookingType === 'hourly' ? 'Hourly Stay' : 'Full-Day Stay'}
                     </span>
                     <span className="text-sm font-bold text-indigo-600">
                       ₹{booking.totalPrice}

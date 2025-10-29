@@ -298,18 +298,23 @@ export default function PremiumHomestays() {
                     >
                       {/* Image + Themed Discount Badge */}
                       <div className="relative">
-                        <img
-                          src={room.images?.[0] || '/default-room.jpg'}
-                          alt={room.title}
-                          className="w-full h-48 object-cover"
-                        />
-                        {hasDiscount && (
-                          <div
-                            className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-md shadow-md"
-                          >
-                            {room.discountPercentage}% OFF
-                          </div>
-                        )}
+                        <Link
+                          href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
+                          className="block group"
+                        >
+                          <img
+                            src={room.images?.[0] || '/default-room.jpg'}
+                            alt={room.title}
+                            className="w-full h-48 object-cover"
+                          />
+                          {hasDiscount && (
+                            <div
+                              className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-md shadow-md"
+                            >
+                              {room.discountPercentage}% OFF
+                            </div>
+                          )}
+                        </Link>
                       </div>
 
                       {/* Room Info */}
