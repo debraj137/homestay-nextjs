@@ -258,30 +258,30 @@ exports.createBooking = async (req, res) => {
     // SMS content
     const smsMessage = `Booking Confirmed: ${room?.title}, ${startStr} - ${endStr}, Guests: ${numberOfAdult}A/${numberOfChild}C, ₹${totalPrice}`;
     // Send SMS to user
-    // if (user?.mobileNumber) {
-    //   try {
-    //     await twilioClient.messages.create({
-    //       body: smsMessage,
-    //       from: process.env.TWILIO_PHONE,
-    //       to: `+91${user.mobileNumber}`,
-    //     });
-    //   } catch (smsErr) {
-    //     console.warn('Failed to send SMS to user:', smsErr.message);
-    //   }
-    // }
+    if (user?.mobileNumber) {
+      try {
+        await twilioClient.messages.create({
+          body: smsMessage,
+          from: process.env.TWILIO_PHONE,
+          to: `+91${user.mobileNumber}`,
+        });
+      } catch (smsErr) {
+        console.warn('Failed to send SMS to user:', smsErr.message);
+      }
+    }
 
     // Send SMS to owner
-    // if (room?.ownerId?.mobileNumber) {
-    //   try {
-    //     await twilioClient.messages.create({
-    //       body: `New Booking: ${room?.title}, ${startStr} - ${endStr}.`,
-    //       from: process.env.TWILIO_PHONE,
-    //       to: `+91${room.ownerId.mobileNumber}`,
-    //     });
-    //   } catch (smsErr) {
-    //     console.warn('Failed to send SMS to owner:', smsErr.message);
-    //   }
-    // }
+    if (room?.ownerId?.mobileNumber) {
+      try {
+        await twilioClient.messages.create({
+          body: `New Booking: ${room?.title}, ${startStr} - ${endStr}.`,
+          from: process.env.TWILIO_PHONE,
+          to: `+91${room.ownerId.mobileNumber}`,
+        });
+      } catch (smsErr) {
+        console.warn('Failed to send SMS to owner:', smsErr.message);
+      }
+    }
 
     res.status(201).json(booking);
   } catch (err) {
