@@ -479,7 +479,7 @@ export default function SearchBox() {
           <div className="flex justify-center md:justify-end w-full md:w-auto pt-2 md:pt-0">
             <button
               type="submit"
-              className="bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded-xl px-8 py-3 shadow-md whitespace-nowrap transition-transform hover:scale-[1.03] cursor-pointer"
+              className="w-full md:w-auto bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded-xl px-8 py-3 shadow-md whitespace-nowrap transition-transform hover:scale-[1.03] cursor-pointer"
             >
               <div className="flex items-center justify-center gap-2">
                 <Search className="w-4 h-4" />
