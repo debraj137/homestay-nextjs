@@ -49,12 +49,12 @@ export default function FAQsPage() {
 
       <p className="mt-10 text-gray-600">
         Still have questions? Reach out to us at{' '}
-        <a href="mailto:support@awadhhotels.com" className="text-red-500 hover:underline">
-          support@awadhhotels.com
+        <a href="mailto:contact@awadhdarsan.com" className="text-red-500 hover:underline">
+          contact@awadhdarsan.com
         </a>{' '}
         or call{' '}
         <a href="tel:+911234567890" className="text-red-500 hover:underline">
-          +91 123-456-7890
+          +91 9250538645
         </a>
         .
       </p>

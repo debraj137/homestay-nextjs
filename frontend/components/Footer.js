@@ -55,8 +55,8 @@ export default function Footer() {
           </h3>
           <p>
             Email:{' '}
-            <a href="mailto:support@awadhhotels.com" className="text-red-400 hover:text-red-300 transition">
-              support@awadhhotels.com
+            <a href="mailto:contact@awadhdarsan.com" className="text-red-400 hover:text-red-300 transition">
+              contact@awadhdarsan.com
             </a>
           </p>
           <p className="mt-2">
@@ -66,7 +66,7 @@ export default function Footer() {
             </a>
           </p>
           <div className="flex space-x-3 mt-4">
-            <a href="#" className="p-2 bg-gray-700 rounded-full hover:bg-red-500 transition">
+            <a href="https://www.facebook.com/profile.php?id=61583136273650" className="p-2 bg-gray-700 rounded-full hover:bg-red-500 transition">
               <Facebook size={18} className="text-white" />
             </a>
             <a href="#" className="p-2 bg-gray-700 rounded-full hover:bg-red-500 transition">

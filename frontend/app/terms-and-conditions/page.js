@@ -36,8 +36,8 @@ export default function TermsAndConditionsPage() {
 
       <p className="mt-8 text-gray-600 italic">
         If you have any questions about these terms, please contact us at{' '}
-        <a href="mailto:support@awadhhotels.com" className="text-red-500 hover:underline">
-          support@awadhhotels.com
+        <a href="mailto:contact@awadhdarsan.com" className="text-red-500 hover:underline">
+          contact@awadhdarsan.com
         </a>.
       </p>
     </div>

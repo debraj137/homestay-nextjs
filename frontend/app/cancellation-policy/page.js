@@ -40,8 +40,8 @@ export default function CancellationPolicyPage() {
 
       <p className="mt-8 text-gray-600 italic">
         For assistance with cancellations, please contact our support team at{' '}
-        <a href="mailto:support@awadhhotels.com" className="text-red-500 hover:underline">
-          support@awadhhotels.com
+        <a href="mailto:contact@awadhdarsan.com" className="text-red-500 hover:underline">
+          contact@awadhdarsan.com
         </a>{' '}
         or call us at{' '}
         <a href="tel:+911234567890" className="text-red-500 hover:underline">
