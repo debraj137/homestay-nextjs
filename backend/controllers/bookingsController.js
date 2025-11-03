@@ -258,30 +258,30 @@ exports.createBooking = async (req, res) => {
     // SMS content
     const smsMessage = `Booking Confirmed: ${room?.title}, ${startStr} - ${endStr}, Guests: ${numberOfAdult}A/${numberOfChild}C, ₹${totalPrice}`;
     // Send SMS to user
-    if (user?.mobileNumber) {
-      try {
-        await twilioClient.messages.create({
-          body: smsMessage,
-          from: process.env.TWILIO_PHONE,
-          to: `+91${user.mobileNumber}`,
-        });
-      } catch (smsErr) {
-        console.warn('Failed to send SMS to user:', smsErr.message);
-      }
-    }
+    // if (user?.mobileNumber) {
+    //   try {
+    //     await twilioClient.messages.create({
+    //       body: smsMessage,
+    //       from: process.env.TWILIO_PHONE,
+    //       to: `+91${user.mobileNumber}`,
+    //     });
+    //   } catch (smsErr) {
+    //     console.warn('Failed to send SMS to user:', smsErr.message);
+    //   }
+    // }
 
     // Send SMS to owner
-    if (room?.ownerId?.mobileNumber) {
-      try {
-        await twilioClient.messages.create({
-          body: `New Booking: ${room?.title}, ${startStr} - ${endStr}.`,
-          from: process.env.TWILIO_PHONE,
-          to: `+91${room.ownerId.mobileNumber}`,
-        });
-      } catch (smsErr) {
-        console.warn('Failed to send SMS to owner:', smsErr.message);
-      }
-    }
+    // if (room?.ownerId?.mobileNumber) {
+    //   try {
+    //     await twilioClient.messages.create({
+    //       body: `New Booking: ${room?.title}, ${startStr} - ${endStr}.`,
+    //       from: process.env.TWILIO_PHONE,
+    //       to: `+91${room.ownerId.mobileNumber}`,
+    //     });
+    //   } catch (smsErr) {
+    //     console.warn('Failed to send SMS to owner:', smsErr.message);
+    //   }
+    // }
 
     res.status(201).json(booking);
   } catch (err) {
@@ -303,5 +303,48 @@ exports.getUserBookings = async (req, res) => {
   } catch (err) {
     console.error("Get user bookings error:", err);
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+
+// Cancel booking before 24 hours
+exports.cancelBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // Already canceled?
+    if (booking.status === "cancelled") {
+      return res.status(400).json({ message: "Booking is already cancelled" });
+    }
+
+    // Get check-in time (startAt for hourly, checkInDate for full)
+    const checkInTime = booking.startAt || booking.checkInDate;
+    const currentTime = new Date();
+
+    // Must be at least 24h before check-in
+    const timeDiffHours = (checkInTime - currentTime) / (1000 * 60 * 60);
+    if (timeDiffHours < 24) {
+      return res.status(400).json({
+        message: "You can cancel your booking only before 24 hours of check-in time",
+      });
+    }
+
+    // Update booking status
+    booking.status = "cancelled";
+    await booking.save();
+
+    // Optional: send cancellation email to user and owner
+    // (You can create a cancelNotificationTemplate later)
+    // await transporter.sendMail(...)
+
+    res.json({ message: "Booking cancelled successfully", booking });
+  } catch (error) {
+    console.error("Cancel booking error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
