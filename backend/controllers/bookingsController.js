@@ -258,30 +258,30 @@ exports.createBooking = async (req, res) => {
     // SMS content
     const smsMessage = `Booking Confirmed: ${room?.title}, ${startStr} - ${endStr}, Guests: ${numberOfAdult}A/${numberOfChild}C, ₹${totalPrice}`;
     // Send SMS to user
-    // if (user?.mobileNumber) {
-    //   try {
-    //     await twilioClient.messages.create({
-    //       body: smsMessage,
-    //       from: process.env.TWILIO_PHONE,
-    //       to: `+91${user.mobileNumber}`,
-    //     });
-    //   } catch (smsErr) {
-    //     console.warn('Failed to send SMS to user:', smsErr.message);
-    //   }
-    // }
+    if (user?.mobileNumber) {
+      try {
+        await twilioClient.messages.create({
+          body: smsMessage,
+          from: process.env.TWILIO_PHONE,
+          to: `+91${user.mobileNumber}`,
+        });
+      } catch (smsErr) {
+        console.warn('Failed to send SMS to user:', smsErr.message);
+      }
+    }
 
     // Send SMS to owner
-    // if (room?.ownerId?.mobileNumber) {
-    //   try {
-    //     await twilioClient.messages.create({
-    //       body: `New Booking: ${room?.title}, ${startStr} - ${endStr}.`,
-    //       from: process.env.TWILIO_PHONE,
-    //       to: `+91${room.ownerId.mobileNumber}`,
-    //     });
-    //   } catch (smsErr) {
-    //     console.warn('Failed to send SMS to owner:', smsErr.message);
-    //   }
-    // }
+    if (room?.ownerId?.mobileNumber) {
+      try {
+        await twilioClient.messages.create({
+          body: `New Booking: ${room?.title}, ${startStr} - ${endStr}.`,
+          from: process.env.TWILIO_PHONE,
+          to: `+91${room.ownerId.mobileNumber}`,
+        });
+      } catch (smsErr) {
+        console.warn('Failed to send SMS to owner:', smsErr.message);
+      }
+    }
 
     res.status(201).json(booking);
   } catch (err) {
@@ -348,3 +348,116 @@ exports.cancelBooking = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
+// ✅ Modify booking by admin (with pricing logic)
+exports.modifyBookingByAdmin = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const {
+      checkInDate,
+      checkOutDate,
+      checkInTime,
+      hours,
+      numberOfAdult,
+      numberOfChild,
+      status,
+    } = req.body;
+
+    const booking = await Booking.findById(bookingId).populate("roomId");
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    const room = booking.roomId;
+    console.log("Modifying booking for room:", room);
+    if (!room) {
+      return res.status(404).json({ message: "Room not found for this booking" });
+    }
+
+    // ✅ Use discount percentage if available
+    let basePrice = room.price;
+    if (room.discount && room.discount > 0) {
+      basePrice = Math.round(room.price * (1 - room.discount / 100));
+    }
+
+    // Update values based on booking type
+    if (booking.bookingType === "full") {
+      if (checkInDate) booking.checkInDate = new Date(checkInDate);
+      if (checkOutDate) booking.checkOutDate = new Date(checkOutDate);
+
+      // Calculate nights
+      const nights = Math.max(
+        1,
+        (booking.checkOutDate - booking.checkInDate) / (1000 * 60 * 60 * 24)
+      );
+
+      booking.totalPrice = basePrice * nights;
+    } else if (booking.bookingType === "hourly") {
+      if (checkInDate) booking.checkInDate = new Date(checkInDate);
+      if (checkInTime) booking.checkInTime = checkInTime;
+      if (hours) booking.hours = Number(hours);
+
+      // Parse check-in time and calculate startAt and endAt
+      const parseTimeStringToHM = (timeStr) => {
+        const pmMatcher = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+        const isoMatcher = /^(\d{1,2}):(\d{2})$/;
+        let m = timeStr.match(pmMatcher);
+        if (m) {
+          let hh = parseInt(m[1], 10);
+          const mm = parseInt(m[2], 10);
+          const ampm = m[3].toUpperCase();
+          if (ampm === "PM" && hh !== 12) hh += 12;
+          if (ampm === "AM" && hh === 12) hh = 0;
+          return { hh, mm };
+        }
+        m = timeStr.match(isoMatcher);
+        if (m) {
+          return { hh: parseInt(m[1], 10), mm: parseInt(m[2], 10) };
+        }
+        return null;
+      };
+
+      const hm = parseTimeStringToHM(booking.checkInTime);
+      const makeLocalDateTime = (dateString, { hh = 0, mm = 0 } = {}) => {
+        const d = new Date(dateString);
+        const year = d.getFullYear();
+        const month = d.getMonth();
+        const day = d.getDate();
+        return new Date(year, month, day, hh, mm, 0, 0);
+      };
+
+      const startAt = makeLocalDateTime(booking.checkInDate, hm);
+      const endAt = new Date(startAt.getTime() + booking.hours * 60 * 60 * 1000);
+
+      booking.startAt = startAt;
+      booking.endAt = endAt;
+
+      // Calculate hourly total price
+      let totalPrice = 0;
+      if (booking.hours <= 3) {
+        totalPrice = basePrice / 4;
+      } else {
+        totalPrice = basePrice / 4 + (basePrice / 12) * (booking.hours - 3);
+      }
+      booking.totalPrice = Math.round(totalPrice);
+    }
+
+    // Common updates
+    if (typeof numberOfAdult !== "undefined")
+      booking.numberOfAdult = Number(numberOfAdult);
+    if (typeof numberOfChild !== "undefined")
+      booking.numberOfChild = Number(numberOfChild);
+    if (status) booking.status = status;
+
+    await booking.save();
+
+    return res.json({ message: "Booking updated successfully", booking });
+  } catch (err) {
+    console.error("Modify booking error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+
