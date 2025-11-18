@@ -16,10 +16,35 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: {
-    default: "Awadh Hotels",
+    default: "Book Hotels in Ayodhya | Hourly & Full-Day Stays – Awadh Hotels",
     template: "%s | Awadh Hotels", // applies to dynamic pages
   },
-  description: "Find and book the best stays with Awadh Hotels.",
+  description: "Book hotels in Ayodhya near Ram Mandir with Awadh Hotels. Choose hourly or full-day stays, verified rooms & instant online booking for your next visit.",
+  keywords: "Ayodhya hotels, hourly hotel booking, full-day hotel stays, verified rooms Ayodhya, online hotel booking Ayodhya, budget hotels Ayodhya, luxury hotels Ayodhya, family-friendly hotels Ayodhya, budget-friendly hotels Ayodhya, business travel Ayodhya, last-minute hotel deals Ayodhya, hotels near Ram Mandir Ayodhya",
+  authors: [{ name: "Awadh Hotels", url: "https://awadhhotels.com" }],
+  creator: "Awadh Hotels",
+  openGraph: {
+    title: "Book Hotels in Ayodhya | Hourly & Full-Day Stays – Awadh Hotels",
+    description: "Book hotels in Ayodhya near Ram Mandir with Awadh Hotels. Choose hourly or full-day stays, verified rooms & instant online booking for your next visit.",
+    url: "https://awadhhotels.com",
+    siteName: "Awadh Hotels",
+    images: [
+      {
+        url: "https://awadhhotels.com/awadh1_logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Awadh Hotels - Book Hotels in Ayodhya",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Book Hotels in Ayodhya | Hourly & Full-Day Stays – Awadh Hotels",
+    description: "Book hotels in Ayodhya near Ram Mandir with Awadh Hotels. Choose hourly or full-day stays, verified rooms & instant online booking for your next visit.",
+    images: ["https://awadhhotels.com/awadh1_logo.png"],
+  },  
 };
 
 export default function RootLayout({ children }) {
