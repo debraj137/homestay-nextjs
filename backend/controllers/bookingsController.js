@@ -1,6 +1,7 @@
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const Room = require('../models/Room');
+const Coupon = require('../models/Coupon');
 const { bookingConfirmationTemplate, ownerNotificationTemplate } = require('../utils/emailTemplates');
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
@@ -99,14 +100,16 @@ exports.createBooking = async (req, res) => {
       checkOutDate,
       numberOfAdult,
       numberOfChild,
-      totalPrice,
+      // totalPrice,  <-- IGNORE client totalPrice for server-side price calc
       mobileNumber,
       status = 'confirmed',
 
       // New/optional hourly fields:
       bookingType = 'full', // 'full' | 'hourly'
       checkInTime, // e.g. "04:00 PM"
-      hours // integer 2..10
+      hours, // integer 2..10
+
+      couponCode // NEW: string coupon code
     } = req.body;
 
     // Basic validation
@@ -155,21 +158,15 @@ exports.createBooking = async (req, res) => {
       endAt = validation.endAt;
     } else {
       // full-day — compute startAt at 00:00 of checkIn and endAt at 00:00 of checkOut
-      // This effectively reserves the entire days from checkIn (inclusive) to checkOut (exclusive)
       startAt = new Date(checkIn.getFullYear(), checkIn.getMonth(), checkIn.getDate(), 0, 0, 0, 0);
       endAt = new Date(checkOut.getFullYear(), checkOut.getMonth(), checkOut.getDate(), 0, 0, 0, 0);
     }
 
     // === Overlap check (time-aware) ===
-    // We need to find any existing confirmed booking for same room where:
-    // existing.startAt < newEnd && existing.endAt > newStart
-    // But older records may not have startAt/endAt (backwards compatibility).
-    // We'll check both cases using $or:
     const overlappingBooking = await Booking.findOne({
       roomId,
       status: 'confirmed',
       $or: [
-        // bookings that have startAt & endAt saved
         {
           startAt: { $exists: true },
           endAt: { $exists: true },
@@ -178,7 +175,6 @@ exports.createBooking = async (req, res) => {
             { endAt: { $gt: startAt } }
           ]
         },
-        // legacy bookings relying on checkInDate/checkOutDate (date-level)
         {
           startAt: { $exists: false },
           $and: [
@@ -195,8 +191,82 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // ✅ Save booking (store startAt/endAt for future precise checks)
-    const booking = new Booking({
+    // -----------------------------
+    // NEW: Load room and compute server-side original price
+    // -----------------------------
+    const room = await Room.findById(roomId);
+    if (!room) return res.status(404).json({ message: 'Room not found' });
+
+    // Apply room-level discount (if present)
+    const roomBasePrice = room.discount && room.discount > 0
+      ? Math.round(room.price * (1 - room.discount / 100))
+      : room.price;
+
+    // Compute original price depending on booking type (same formula as frontend)
+    let originalPrice = 0;
+    if (bookingType === 'hourly' && hours) {
+      if (hours <= 3) {
+        originalPrice = roomBasePrice / 4;
+      } else {
+        originalPrice = roomBasePrice / 4 + (roomBasePrice / 12) * (hours - 3);
+      }
+      originalPrice = Math.round(originalPrice);
+    } else {
+      const nights = Math.max(
+        1,
+        (checkOut - checkIn) / (1000 * 60 * 60 * 24)
+      );
+      originalPrice = roomBasePrice * nights;
+    }
+
+    // ===== Coupon handling: validate and compute discount using originalPrice (server-side) =====
+    let coupon = null;
+    let discountAmount = 0;
+    if (couponCode) {
+      const code = couponCode.toUpperCase();
+      coupon = await Coupon.findOne({ code, isActive: true });
+      if (!coupon) return res.status(400).json({ message: 'Invalid coupon code' });
+
+      const now = new Date();
+      if (now < coupon.startsAt) return res.status(400).json({ message: 'Coupon not active yet' });
+      if (now > coupon.endsAt) return res.status(400).json({ message: 'Coupon expired' });
+
+      if (coupon.maxUses > 0 && (coupon.usesCount || 0) >= coupon.maxUses) {
+        return res.status(400).json({ message: 'Coupon usage limit reached' });
+      }
+
+      if (coupon.maxUsesPerUser > 0) {
+        const userUses = await Booking.countDocuments({ userId, 'coupon.code': coupon.code });
+        if (userUses >= coupon.maxUsesPerUser) {
+          return res.status(400).json({ message: 'You have already used this coupon the maximum times' });
+        }
+      }
+
+      // min booking amount: check against server-side originalPrice (NOT client totalPrice)
+      if (originalPrice < (coupon.minBookingAmount || 0)) {
+        return res.status(400).json({ message: `Minimum booking amount for this coupon is ${coupon.minBookingAmount}` });
+      }
+
+      // applicableRooms check
+      if (coupon.applicableRooms && coupon.applicableRooms.length > 0) {
+        const isApplicable = coupon.applicableRooms.some(r => r.toString() === roomId.toString());
+        if (!isApplicable) return res.status(400).json({ message: 'Coupon not applicable for this room' });
+      }
+
+      // compute discountAmount based on originalPrice
+      if (coupon.discountType === 'percent') {
+        const pct = Math.min(Math.max(coupon.discountValue, 0), 100);
+        discountAmount = Math.round((originalPrice * (pct / 100)) * 100) / 100;
+      } else {
+        discountAmount = Math.min(originalPrice, coupon.discountValue);
+      }
+    }
+
+    // Final price computed server-side
+    const finalPrice = Math.round((originalPrice - discountAmount) * 100) / 100;
+
+    // Prepare booking object (include coupon snapshot if present)
+    const bookingData = {
       userId,
       roomId,
       checkInDate: checkIn,
@@ -206,82 +276,87 @@ exports.createBooking = async (req, res) => {
       hours: bookingType === 'hourly' ? Number(hours) : undefined,
       startAt,
       endAt,
-      checkInDate: bookingType === 'hourly' ? startAt : checkIn,
-      checkOutDate: bookingType === 'hourly' ? endAt : checkOut,
       numberOfAdult,
       numberOfChild,
-      totalPrice,
+      totalPrice: finalPrice, // final price after coupon (server-side)
       mobileNumber,
-      status
-    });
+      status,
+      coupon: coupon ? {
+        code: coupon.code,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        discountAmount
+      } : undefined
+    };
 
+    const booking = new Booking(bookingData);
     await booking.save();
 
-    // Fetch extra info for notifications
-    const room = await Room.findById(roomId).populate('ownerId');
-    const user = await User.findById(userId);
+    // If coupon used, increment coupon.usesCount atomically; if fails, rollback booking
+    if (coupon) {
+      // attempt atomic increment only if maxUses not exceeded (or maxUses==0)
+      const filter = { _id: coupon._id };
+      if (coupon.maxUses > 0) {
+        filter.$expr = { $lt: ["$usesCount", coupon.maxUses] }; // ensure usesCount < maxUses
+      }
+      // try increment
+      const updated = await Coupon.findOneAndUpdate(filter, { $inc: { usesCount: 1 } }, { new: true });
+      if (!updated) {
+        // rollback booking
+        await Booking.findByIdAndDelete(booking._id);
+        return res.status(400).json({ message: 'Coupon usage limit reached (race). Please try again.' });
+      }
+    }
 
-    // Email + SMS content (use the booking.startAt/endAt info for details)
+    // Fetch extra info for notifications (we already have room above; fetch owner)
+    const populatedRoom = await Room.findById(roomId).populate('ownerId');
+    const userDoc = await User.findById(userId);
+
     const startStr = booking.startAt ? booking.startAt.toString() : new Date(booking.checkInDate).toDateString();
     const endStr = booking.endAt ? booking.endAt.toString() : new Date(booking.checkOutDate).toDateString();
 
-    // Email Content
-    const emailContent = `
-      <h2>Booking Details</h2>
-      <p><strong>Room:</strong> ${room?.title}</p>
-      <p><strong>Check-in:</strong> ${startStr}</p>
-      <p><strong>Check-out:</strong> ${endStr}</p>
-      <p><strong>Guests:</strong> ${numberOfAdult} Adults, ${numberOfChild} Children</p>
-      <p><strong>Total Price:</strong> ₹${totalPrice}</p>
-    `;
-
-    // Send confirmation email to user
-    if (user?.email) {
+    // Send emails/SMS (unchanged)
+    if (userDoc?.email) {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-        to: user.email,
+        to: userDoc.email,
         subject: 'Booking Confirmation - Awadh Hotels',
-        html: bookingConfirmationTemplate(user, room, booking),
+        html: bookingConfirmationTemplate(userDoc, populatedRoom, booking),
       });
     }
 
-    // Send notification email to room owner
-    if (room?.ownerId?.email) {
+    if (populatedRoom?.ownerId?.email) {
       await transporter.sendMail({
         from: process.env.EMAIL_USER,
-        to: room.ownerId.email,
+        to: populatedRoom.ownerId.email,
         subject: 'New Booking Received',
-        html: ownerNotificationTemplate(room.ownerId, user, room, booking),
+        html: ownerNotificationTemplate(populatedRoom.ownerId, userDoc, populatedRoom, booking),
       });
     }
 
-    // SMS content
-    const smsMessage = `Booking Confirmed: ${room?.title}, ${startStr} - ${endStr}, Guests: ${numberOfAdult}A/${numberOfChild}C, ₹${totalPrice}`;
-    // Send SMS to user
-    if (user?.mobileNumber) {
-      try {
-        await twilioClient.messages.create({
-          body: smsMessage,
-          from: process.env.TWILIO_PHONE,
-          to: `+91${user.mobileNumber}`,
-        });
-      } catch (smsErr) {
-        console.warn('Failed to send SMS to user:', smsErr.message);
-      }
-    }
-
-    // Send SMS to owner
-    if (room?.ownerId?.mobileNumber) {
-      try {
-        await twilioClient.messages.create({
-          body: `New Booking: ${room?.title}, ${startStr} - ${endStr}.`,
-          from: process.env.TWILIO_PHONE,
-          to: `+91${room.ownerId.mobileNumber}`,
-        });
-      } catch (smsErr) {
-        console.warn('Failed to send SMS to owner:', smsErr.message);
-      }
-    }
+    const smsMessage = `Booking Confirmed: ${populatedRoom?.title}, ${startStr} - ${endStr}, Guests: ${numberOfAdult}A/${numberOfChild}C, ₹${booking.totalPrice}`;
+    // if (userDoc?.mobileNumber) {
+    //   try {
+    //     await twilioClient.messages.create({
+    //       body: smsMessage,
+    //       from: process.env.TWILIO_PHONE,
+    //       to: `+91${userDoc.mobileNumber}`,
+    //     });
+    //   } catch (smsErr) {
+    //     console.warn('Failed to send SMS to user:', smsErr.message);
+    //   }
+    // }
+    // if (populatedRoom?.ownerId?.mobileNumber) {
+    //   try {
+    //     await twilioClient.messages.create({
+    //       body: `New Booking: ${populatedRoom?.title}, ${startStr} - ${endStr}.`,
+    //       from: process.env.TWILIO_PHONE,
+    //       to: `+91${populatedRoom.ownerId.mobileNumber}`,
+    //     });
+    //   } catch (smsErr) {
+    //     console.warn('Failed to send SMS to owner:', smsErr.message);
+    //   }
+    // }
 
     res.status(201).json(booking);
   } catch (err) {
@@ -289,6 +364,7 @@ exports.createBooking = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 
 // Get bookings for a user (unchanged except returns booking info)
