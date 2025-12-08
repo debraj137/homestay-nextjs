@@ -237,3 +237,14 @@ exports.getRoomsByCategory = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+exports.getApprovedRoomsByOwner = async (req, res) => {
+  try {
+    const { ownerId } = req.params;
+    const rooms = await Room.find({ ownerId, isApproved: true }).sort({ createdAt: -1 });
+    res.json(rooms);
+  } catch (err) {
+    console.error('getApprovedRoomsByOwner:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

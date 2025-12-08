@@ -53,7 +53,7 @@ export default function PropertyListPage() {
                 <th className="px-4 py-2 border">Max Allowed Adult</th>
                 <th className="px-4 py-2 border">Max Allowed Child</th>
                 <th className="px-4 py-2 border">Price</th>
-                <th className="px-4 py-2 border">Action</th>
+                {/* <th className="px-4 py-2 border">Action</th> */}
               </tr>
             </thead>
             <tbody>
@@ -63,14 +63,14 @@ export default function PropertyListPage() {
                   <td className="px-4 py-2 border">{room.maximumAllowedAdult}</td>
                   <td className="px-4 py-2 border">{room.maximumAllowedChild}</td>
                   <td className="px-4 py-2 border">₹{room.price}</td>
-                  <td className="px-4 py-2 border">
+                  {/* <td className="px-4 py-2 border">
                     <Link
                       href={`/bookings/${room._id}`}
                       className="text-blue-600 hover:underline"
                     >
                       View Bookings
                     </Link>
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>

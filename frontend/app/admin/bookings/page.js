@@ -381,7 +381,7 @@ export default function AllBookingsPage() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => openEditModal(b)}
-                        className="text-blue-600 hover:underline text-sm"
+                        className="text-blue-600 hover:underline text-sm cursor-pointer"
                       >
                         Modify
                       </button>

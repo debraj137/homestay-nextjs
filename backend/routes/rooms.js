@@ -14,6 +14,7 @@ router.get('/category/:category', roomsController.getRoomsByCategory);
 
 // get rooms by owner
 router.get('/owner/:ownerId', roomsController.getRoomsByOwner);
+router.get('/owner/:ownerId/approved', roomsController.getApprovedRoomsByOwner);
 router.get('/:id', roomsController.getRoom);
 router.put('/:id', roomsController.updateRoom);
 
