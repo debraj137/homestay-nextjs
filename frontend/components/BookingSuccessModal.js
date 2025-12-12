@@ -1,46 +1,3 @@
-// 'use client';
-
-// export default function BookingSuccessModal({ booking, room, onClose }) {
-//   if (!booking) return null;
-
-//   return (
-//     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-//       <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
-
-//         <h2 className="text-2xl font-bold text-green-700 mb-3 text-center">
-//           Booking Confirmed 🎉
-//         </h2>
-
-//         <p className="text-center text-gray-700 mb-4">
-//           Your booking is successful.  
-//           <strong>Please check your email</strong> for the confirmation details.
-//         </p>
-
-//         <div className="space-y-2 text-gray-700 border p-4 rounded-lg">
-//           <p><strong>Room:</strong> {room?.title}</p>
-//           <p><strong>Booking ID:</strong> {booking?._id}</p>
-//           <p><strong>Check-in:</strong> {booking?.checkInDate?.slice(0, 10)}</p>
-//           <p><strong>Check-out:</strong> {booking?.checkOutDate?.slice(0, 10)}</p>
-//           <p><strong>Total Paid:</strong> ₹{booking?.totalPrice}</p>
-
-//           {booking?.coupon?.code && (
-//             <p className="text-green-700">
-//               <strong>Coupon Used:</strong> {booking.coupon.code}  
-//               ({booking.coupon.discountAmount} OFF)
-//             </p>
-//           )}
-//         </div>
-
-//         <button
-//           onClick={onClose}
-//           className="w-full mt-5 bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-lg font-semibold cursor-pointer"
-//         >
-//           Go to My Bookings
-//         </button>
-//       </div>
-//     </div>
-//   );
-// }
 'use client';
 import React from 'react';
 
@@ -63,6 +20,14 @@ export default function BookingSuccessModal({ booking, room, userEmail, open = f
 
         <div className="space-y-2 text-gray-700 border p-4 rounded-lg">
           <p><strong>Room:</strong> {room?.title || '—'}</p>
+          <p>
+            <strong>Location:</strong>
+            {room?.location?.addressLine1 || ''}{room?.location?.addressLine1 ? ', ' : ''}
+            {room?.location?.addressLine2 || ''}{room?.location?.addressLine2 ? ', ' : ''}
+            {room?.location?.city || ''}{room?.location?.city ? ', ' : ''}
+            {room?.location?.state || ''}{room?.location?.pincode ? ' - ' : ''}
+            {room?.location?.pincode || ''}
+          </p>
           <p><strong>Booking ID:</strong> {booking?._id || booking?.id || '—'}</p>
           <p><strong>Check-in:</strong> {displayCheckIn}</p>
           <p><strong>Check-out:</strong> {displayCheckOut}</p>
