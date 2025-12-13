@@ -122,15 +122,53 @@ exports.getRoomsByOwner = async (req, res) => {
 };
 
 // Get all bookings
+// exports.getAllBookings = async (req, res) => {
+//   try {
+//     const bookings = await Booking.find()
+//       .populate('roomId') // get room details
+//       .populate('userId', 'name email'); // get user details
+
+//     res.json(bookings);
+//   } catch (err) {
+//     res.status(500).json({ message: 'Failed to fetch bookings' });
+//   }
+// };
+
+/**
+ * GET /admin/bookings?page=1&limit=20
+ * Returns paginated bookings with room & user populated.
+ */
 exports.getAllBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find()
-      .populate('roomId') // get room details
-      .populate('userId', 'name email'); // get user details
+    // parse pagination params (default page=1, limit=20)
+    const page = Math.max(1, parseInt(req.query.page || '1', 10));
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit || '20', 10))); // cap to 100
 
-    res.json(bookings);
+    const filter = {}; // you can extend with query filters later (status, room, date, etc.)
+
+    // total count for pagination
+    const total = await Booking.countDocuments(filter);
+
+    // fetch page (sort by newest)
+    const bookings = await Booking.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('roomId')
+      .populate('userId', 'name email');
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.json({
+      bookings,
+      total,
+      page,
+      totalPages,
+      limit
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch bookings' });
+    console.error('getAllBookings error', err);
+    res.status(500).json({ message: 'Failed to fetch bookings', error: err.message });
   }
 };
 

@@ -1,177 +1,3 @@
-// 'use client';
-// import { useEffect, useState } from 'react';
-// import toast from 'react-hot-toast';
-
-// export default function AllBookingsPage() {
-//   const [bookings, setBookings] = useState([]);
-
-//   useEffect(() => {
-//     async function fetchBookings() {
-//       try {
-//         const res = await fetch(
-//           `${process.env.NEXT_PUBLIC_API_BASE}/admin/bookings`,
-//           {
-//             headers: {
-//               Authorization: `Bearer ${localStorage.getItem('token')}`,
-//             },
-//           }
-//         );
-//         const data = await res.json();
-//         if (!res.ok) throw new Error(data.message);
-//         setBookings(data);
-//       } catch (err) {
-//         toast.error(err.message || 'Failed to fetch bookings');
-//       }
-//     }
-//     fetchBookings();
-//   }, []);
-
-//   return (
-//     <div className="max-w-7xl mx-auto px-4 py-8">
-//       <h1 className="text-2xl font-bold mb-6">All Bookings</h1>
-//       <div className="overflow-x-auto">
-//         <table className="w-full border-collapse border rounded-lg shadow">
-//           <thead className="bg-blue-100">
-//             <tr>
-//               <th className="p-3 text-left">Room Title</th>
-//               <th className="p-3 text-left">Address</th>
-//               <th className="p-3 text-left">Booked By</th>
-//               <th className="p-3 text-left">Booking Type</th>
-//               <th className="p-3 text-left">Check-In Time</th>
-//               <th className="p-3 text-left">Hours</th>
-//               <th className="p-3 text-left">Status</th>
-//               <th className="p-3 text-left">Check-in Date</th>
-//               <th className="p-3 text-left">Check-out Date</th>
-//               <th className="p-3 text-left">Adult</th>
-//               <th className="p-3 text-left">Child</th>
-//               <th className="p-3 text-left">Total Price</th>
-//             </tr>
-//           </thead>
-
-//           <tbody>
-//             {bookings.length === 0 ? (
-//               <tr>
-//                 <td colSpan="12" className="text-center p-4 text-gray-500">
-//                   No bookings found.
-//                 </td>
-//               </tr>
-//             ) : (
-//               bookings.map((b) => (
-//                 <tr key={b._id} className="border-t">
-//                   <td className="p-3">{b.roomId?.title}</td>
-//                   <td className="p-3">
-//                     {b.roomId?.location?.addressLine1},{' '}
-//                     {b.roomId?.location?.city},{' '}
-//                     {b.roomId?.location?.state} -{' '}
-//                     {b.roomId?.location?.pincode}
-//                   </td>
-//                   <td className="p-3">{b.userId?.name}</td>
-
-//                   {/* Booking Type */}
-//                   <td className="p-3 capitalize">
-//                     {b.bookingType === 'hourly' ? 'Hourly Stay' : 'Full-Day Stay'}
-//                   </td>
-
-//                   {/* Check-In Time (only for hourly bookings) */}
-//                   <td className="p-3">
-//                     {b.bookingType === 'hourly' ? b.checkInTime || '—' : '—'}
-//                   </td>
-
-//                   {/* Hours */}
-//                   <td className="p-3">
-//                     {b.bookingType === 'hourly' ? `${b.hours || '-'} hrs` : '—'}
-//                   </td>
-
-//                   {/* Status + Modify */}
-//                   <td className="p-3 flex items-center gap-2">
-//                     <span
-//                       className={`px-2 py-1 rounded-full text-xs font-medium ${b.status === 'confirmed'
-//                         ? 'bg-green-100 text-green-700'
-//                         : 'bg-red-100 text-red-700'
-//                         }`}
-//                     >
-//                       {b.status}
-//                     </span>
-//                     <button
-//                       onClick={async () => {
-//                         let body = {};
-//                         if (b.bookingType === "full") {
-//                           const newCheckIn = prompt("Enter new Check-In Date (YYYY-MM-DD):", b.checkInDate?.slice(0, 10));
-//                           const newCheckOut = prompt("Enter new Check-Out Date (YYYY-MM-DD):", b.checkOutDate?.slice(0, 10));
-//                           const newAdults = prompt("Enter number of adults:", b.numberOfAdult);
-//                           const newChildren = prompt("Enter number of children:", b.numberOfChild);
-
-//                           body = {
-//                             checkInDate: newCheckIn,
-//                             checkOutDate: newCheckOut,
-//                             numberOfAdult: Number(newAdults),
-//                             numberOfChild: Number(newChildren),
-//                           };
-//                         } else {
-//                           const newCheckInDate = prompt("Enter new Check-In Date (YYYY-MM-DD):", b.checkInDate?.slice(0, 10));
-//                           const newCheckInTime = prompt("Enter new Check-In Time (e.g., 04:00 PM):", b.checkInTime || "04:00 PM");
-//                           const newHours = prompt("Enter duration in hours:", b.hours);
-//                           const newAdults = prompt("Enter number of adults:", b.numberOfAdult);
-//                           const newChildren = prompt("Enter number of children:", b.numberOfChild);
-
-//                           body = {
-//                             checkInDate: newCheckInDate,
-//                             checkInTime: newCheckInTime,
-//                             hours: Number(newHours),
-//                             numberOfAdult: Number(newAdults),
-//                             numberOfChild: Number(newChildren),
-//                           };
-//                         }
-
-//                         try {
-//                           const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/bookings/${b._id}/modify`, {
-//                             method: "PUT",
-//                             headers: {
-//                               "Content-Type": "application/json",
-//                               Authorization: `Bearer ${localStorage.getItem("token")}`,
-//                             },
-//                             body: JSON.stringify(body),
-//                           });
-
-//                           const data = await res.json();
-//                           if (!res.ok) throw new Error(data.message);
-
-//                           toast.success("Booking updated successfully!");
-//                           setBookings((prev) => prev.map((bk) => (bk._id === b._id ? data.booking : bk)));
-//                         } catch (err) {
-//                           toast.error(err.message || "Failed to modify booking");
-//                         }
-//                       }}
-//                       className="text-blue-600 hover:underline text-sm"
-//                     >
-//                       Modify
-//                     </button>
-
-//                   </td>
-
-//                   {/* Dates */}
-//                   <td className="p-3">
-//                     {new Date(b.checkInDate).toLocaleDateString()}
-//                   </td>
-//                   <td className="p-3">
-//                     {new Date(b.checkOutDate).toLocaleDateString()}
-//                   </td>
-
-//                   <td className="p-3">{b.numberOfAdult}</td>
-//                   <td className="p-3">{b.numberOfChild}</td>
-//                   <td className="p-3 font-semibold">₹{b.totalPrice}</td>
-//                 </tr>
-//               ))
-//             )}
-//           </tbody>
-
-
-//         </table>
-//       </div>
-//     </div>
-//   );
-// }
-
 'use client';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -181,32 +7,75 @@ export default function AllBookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20); // default rows per page
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   // modal state
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    async function fetchBookings() {
-      setLoading(true);
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/bookings`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed to load');
-        setBookings(data);
-      } catch (err) {
-        toast.error(err.message || 'Failed to fetch bookings');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchBookings();
-  }, []);
+  // useEffect(() => {
+  //   async function fetchBookings() {
+  //     setLoading(true);
+  //     try {
+  //       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/bookings`, {
+  //         headers: {
+  //           Authorization: `Bearer ${localStorage.getItem('token')}`,
+  //         },
+  //       });
+  //       const data = await res.json();
+  //       if (!res.ok) throw new Error(data.message || 'Failed to load');
+  //       setBookings(data);
+  //     } catch (err) {
+  //       toast.error(err.message || 'Failed to fetch bookings');
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+  //   fetchBookings();
+  // }, []);
+  // fetchBookings reads page & limit
+  async function fetchBookings(p = page, l = limit) {
+    setLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/bookings?page=${p}&limit=${l}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to load');
 
+      // If backend returns the paginated shape:
+      if (data.bookings) {
+        setBookings(data.bookings);
+        setTotal(data.total || 0);
+        setPage(Number(data.page || p));
+        setLimit(Number(data.limit || l));
+        setTotalPages(Number(data.totalPages || Math.ceil((data.total || 0) / (data.limit || l))));
+      } else {
+        // fallback to older shape (array)
+        setBookings(Array.isArray(data) ? data : []);
+        setTotal(Array.isArray(data) ? data.length : 0);
+        setPage(1);
+        setTotalPages(1);
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to fetch bookings');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // initial fetch, and when page/limit changes
+  useEffect(() => {
+    fetchBookings(page, limit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
   function openEditModal(booking) {
     // prepare formData with safe defaults
     setSelectedBooking(booking);
@@ -315,6 +184,7 @@ export default function AllBookingsPage() {
               <th className="p-3 text-left">Room Title</th>
               <th className="p-3 text-left">Address</th>
               <th className="p-3 text-left">Booked By</th>
+              <th className="p-3 text-left">Booking Date</th>
               <th className="p-3 text-left">Booking Type</th>
               <th className="p-3 text-left">Check-In Time</th>
               <th className="p-3 text-left">Hours</th>
@@ -331,11 +201,11 @@ export default function AllBookingsPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="13" className="text-center p-8 text-gray-500">Loading...</td>
+                <td colSpan="14" className="text-center p-8 text-gray-500">Loading...</td>
               </tr>
             ) : bookings.length === 0 ? (
               <tr>
-                <td colSpan="13" className="text-center p-4 text-gray-500">No bookings found.</td>
+                <td colSpan="14" className="text-center p-4 text-gray-500">No bookings found.</td>
               </tr>
             ) : (
               bookings.map((b) => (
@@ -347,7 +217,7 @@ export default function AllBookingsPage() {
                     {b.roomId?.location?.state || ''} {b.roomId?.location?.pincode ? '- ' + b.roomId?.location?.pincode : ''}
                   </td>
                   <td className="p-3">{b.userId?.name}</td>
-
+                  <td className="p-3">{b.createdAt ? new Date(b.createdAt).toLocaleString('en-IN') : '—'}</td>
                   {/* Booking Type */}
                   <td className="p-3 capitalize">
                     {b.bookingType === 'hourly' ? 'Hourly Stay' : 'Full-Day Stay'}
@@ -392,6 +262,82 @@ export default function AllBookingsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination controls */}
+      <div className="mt-4 flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          Showing <strong>{bookings.length}</strong> of <strong>{total}</strong> bookings
+          {totalPages > 1 && <span> — page {page} of {totalPages}</span>}
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className={`px-3 py-1 rounded border ${page <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+            >
+              Prev
+            </button>
+
+            {/* show up to 7 page buttons centered on current page */}
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: totalPages }).map((_, i) => {
+                const p = i + 1;
+                // show only a window of pages
+                const showWindow = 7;
+                const half = Math.floor(showWindow / 2);
+                if (totalPages > showWindow) {
+                  if (p === 1 || p === totalPages) return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`px-2 py-1 rounded ${p === page ? 'bg-gray-800 text-white' : 'border'}`}
+                    >
+                      {p}
+                    </button>
+                  );
+                  if (Math.abs(p - page) > half) {
+                    // skip rendering pages far from current; but render ellipsis in place
+                    // we'll render ellipsis only once per gap — simpler approach: render only pages within window
+                    return null;
+                  }
+                }
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`px-2 py-1 rounded ${p === page ? 'bg-gray-800 text-white' : 'border'}`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className={`px-3 py-1 rounded border ${page >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
+            >
+              Next
+            </button>
+
+            {/* optional: change rows per page */}
+            <select
+              value={limit}
+              onChange={(e) => {
+                const newLimit = Number(e.target.value) || 20;
+                setPage(1); // reset to first page on limit change
+                setLimit(newLimit);
+              }}
+              className="ml-3 border rounded px-2 py-1"
+            >
+              {[5,10, 20, 30, 50, 100].map(n => <option key={n} value={n}>{n}/page</option>)}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Edit Modal */}
