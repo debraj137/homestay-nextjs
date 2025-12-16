@@ -18,64 +18,47 @@ export default function AllBookingsPage() {
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
 
-  // useEffect(() => {
-  //   async function fetchBookings() {
-  //     setLoading(true);
-  //     try {
-  //       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/bookings`, {
-  //         headers: {
-  //           Authorization: `Bearer ${localStorage.getItem('token')}`,
-  //         },
-  //       });
-  //       const data = await res.json();
-  //       if (!res.ok) throw new Error(data.message || 'Failed to load');
-  //       setBookings(data);
-  //     } catch (err) {
-  //       toast.error(err.message || 'Failed to fetch bookings');
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-  //   fetchBookings();
-  // }, []);
-  // fetchBookings reads page & limit
-  async function fetchBookings(p = page, l = limit) {
-    setLoading(true);
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/bookings?page=${p}&limit=${l}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to load');
+  const [filters, setFilters] = useState({
+    qTitle: '',
+    qLocation: '',
+    qBookedBy: '',
+    bookingDate: '', // YYYY-MM-DD
+    bookingType: '', // '' | 'hourly' | 'full'
+  });
 
-      // If backend returns the paginated shape:
-      if (data.bookings) {
-        setBookings(data.bookings);
-        setTotal(data.total || 0);
-        setPage(Number(data.page || p));
-        setLimit(Number(data.limit || l));
-        setTotalPages(Number(data.totalPages || Math.ceil((data.total || 0) / (data.limit || l))));
-      } else {
-        // fallback to older shape (array)
-        setBookings(Array.isArray(data) ? data : []);
-        setTotal(Array.isArray(data) ? data.length : 0);
-        setPage(1);
-        setTotalPages(1);
-      }
-    } catch (err) {
-      toast.error(err.message || 'Failed to fetch bookings');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // initial fetch, and when page/limit changes
   useEffect(() => {
-    fetchBookings(page, limit);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit]);
+    async function fetchBookings() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (filters.qTitle) params.append('qTitle', filters.qTitle);
+        if (filters.qLocation) params.append('qLocation', filters.qLocation);
+        if (filters.qBookedBy) params.append('qBookedBy', filters.qBookedBy);
+        if (filters.bookingDate) params.append('bookingDate', filters.bookingDate);
+        if (filters.bookingType) params.append('bookingType', filters.bookingType);
+        if (page) params.append('page', page);
+        if (limit) params.append('limit', limit);
+
+        const url = `${process.env.NEXT_PUBLIC_API_BASE}/admin/bookings?${params.toString()}`;
+
+        const res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to load');
+        // Now backend returns { total, page, limit, bookings }
+        setBookings(data.bookings || []);
+        setTotal(Number(data.total || 0));
+      } catch (err) {
+        toast.error(err.message || 'Failed to fetch bookings');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBookings();
+  }, [filters, page, limit]);
   function openEditModal(booking) {
     // prepare formData with safe defaults
     setSelectedBooking(booking);
@@ -176,6 +159,42 @@ export default function AllBookingsPage() {
   return (
     <div className="max-w-9xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">All Bookings</h1>
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap gap-3 items-end">
+        <div>
+          <label className="text-xs text-gray-600">Room title</label>
+          <input type="text" value={filters.qTitle} onChange={(e) => setFilters(f => ({ ...f, qTitle: e.target.value }))} placeholder="Search room title" className="border px-3 py-2 rounded w-60" />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-600">Location</label>
+          <input type="text" value={filters.qLocation} onChange={(e) => setFilters(f => ({ ...f, qLocation: e.target.value }))} placeholder="City / State / Address" className="border px-3 py-2 rounded w-60" />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-600">Booked by</label>
+          <input type="text" value={filters.qBookedBy} onChange={(e) => setFilters(f => ({ ...f, qBookedBy: e.target.value }))} placeholder="User name or email" className="border px-3 py-2 rounded w-60" />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-600">Booking date</label>
+          <input type="date" value={filters.bookingDate} onChange={(e) => setFilters(f => ({ ...f, bookingDate: e.target.value }))} className="border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="text-xs text-gray-600">Booking type</label>
+          <select value={filters.bookingType} onChange={(e) => setFilters(f => ({ ...f, bookingType: e.target.value }))} className="border px-3 py-2 rounded">
+            <option value="">All</option>
+            <option value="full">Full-Day</option>
+            <option value="hourly">Hourly</option>
+          </select>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={() => { setFilters({ qTitle: '', qLocation: '', qBookedBy: '', bookingDate: '', bookingType: '' }); setPage(1); }} className="px-3 py-2 border rounded text-sm">Reset</button>
+          <button onClick={() => { setPage(1); }} className="px-3 py-2 bg-gray-800 text-white rounded text-sm">Apply</button>
+        </div>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full border-collapse border rounded-lg shadow">
@@ -265,80 +284,26 @@ export default function AllBookingsPage() {
       </div>
 
       {/* Pagination controls */}
+      {/* Pagination */}
       <div className="mt-4 flex items-center justify-between">
         <div className="text-sm text-gray-600">
-          Showing <strong>{bookings.length}</strong> of <strong>{total}</strong> bookings
-          {totalPages > 1 && <span> — page {page} of {totalPages}</span>}
+          Showing {(page - 1) * limit + 1} – {Math.min(page * limit, total)} of {total}
         </div>
 
-        {totalPages > 1 && (
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className={`px-3 py-1 rounded border ${page <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
-            >
-              Prev
-            </button>
+        <div className="flex items-center gap-2">
+          <button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className={`px-3 py-1 rounded border ${page <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}>Prev</button>
+          <div className="px-3 py-1 border rounded">Page {page}</div>
+          <button disabled={page * limit >= total} onClick={() => setPage(p => p + 1)} className={`px-3 py-1 rounded border ${page * limit >= total ? 'opacity-50 cursor-not-allowed' : ''}`}>Next</button>
 
-            {/* show up to 7 page buttons centered on current page */}
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const p = i + 1;
-                // show only a window of pages
-                const showWindow = 7;
-                const half = Math.floor(showWindow / 2);
-                if (totalPages > showWindow) {
-                  if (p === 1 || p === totalPages) return (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={`px-2 py-1 rounded ${p === page ? 'bg-gray-800 text-white' : 'border'}`}
-                    >
-                      {p}
-                    </button>
-                  );
-                  if (Math.abs(p - page) > half) {
-                    // skip rendering pages far from current; but render ellipsis in place
-                    // we'll render ellipsis only once per gap — simpler approach: render only pages within window
-                    return null;
-                  }
-                }
-                return (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`px-2 py-1 rounded ${p === page ? 'bg-gray-800 text-white' : 'border'}`}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page >= totalPages}
-              className={`px-3 py-1 rounded border ${page >= totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'}`}
-            >
-              Next
-            </button>
-
-            {/* optional: change rows per page */}
-            <select
-              value={limit}
-              onChange={(e) => {
-                const newLimit = Number(e.target.value) || 20;
-                setPage(1); // reset to first page on limit change
-                setLimit(newLimit);
-              }}
-              className="ml-3 border rounded px-2 py-1"
-            >
-              {[5,10, 20, 30, 50, 100].map(n => <option key={n} value={n}>{n}/page</option>)}
-            </select>
-          </div>
-        )}
+          <select value={limit} onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }} className="border px-2 py-1 rounded">
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </div>
       </div>
+
 
       {/* Edit Modal */}
       {selectedBooking && (

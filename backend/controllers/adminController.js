@@ -138,39 +138,199 @@ exports.getRoomsByOwner = async (req, res) => {
  * GET /admin/bookings?page=1&limit=20
  * Returns paginated bookings with room & user populated.
  */
+// exports.getAllBookings = async (req, res) => {
+//   try {
+//     // parse pagination params (default page=1, limit=20)
+//     const page = Math.max(1, parseInt(req.query.page || '1', 10));
+//     const limit = Math.max(1, Math.min(100, parseInt(req.query.limit || '20', 10))); // cap to 100
+
+//     const filter = {}; // you can extend with query filters later (status, room, date, etc.)
+
+//     // total count for pagination
+//     const total = await Booking.countDocuments(filter);
+
+//     // fetch page (sort by newest)
+//     const bookings = await Booking.find(filter)
+//       .sort({ createdAt: -1 })
+//       .skip((page - 1) * limit)
+//       .limit(limit)
+//       .populate('roomId')
+//       .populate('userId', 'name email');
+
+//     const totalPages = Math.ceil(total / limit);
+
+//     res.json({
+//       bookings,
+//       total,
+//       page,
+//       totalPages,
+//       limit
+//     });
+//   } catch (err) {
+//     console.error('getAllBookings error', err);
+//     res.status(500).json({ message: 'Failed to fetch bookings', error: err.message });
+//   }
+// };
+// GET /admin/bookings
+// supports query params:
+// qTitle (string) - search room title (partial, case-insensitive)
+// qLocation (string) - search city / state / addressLine (partial)
+// qBookedBy (string) - search user name or email (partial)
+// bookingDate (YYYY-MM-DD) - bookings created on that date (server local timezone)
+// bookingType ('hourly'|'full')
+// page (int, default 1) - pagination
+// limit (int, default 25)
 exports.getAllBookings = async (req, res) => {
   try {
-    // parse pagination params (default page=1, limit=20)
-    const page = Math.max(1, parseInt(req.query.page || '1', 10));
-    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit || '20', 10))); // cap to 100
+    const {
+      qTitle,
+      qLocation,
+      qBookedBy,
+      bookingDate,
+      bookingType,
+      page = 1,
+      limit = 25,
+    } = req.query;
 
-    const filter = {}; // you can extend with query filters later (status, room, date, etc.)
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const pageLimit = Math.min(200, parseInt(limit, 10) || 25); 
+    const skip = (pageNum - 1) * pageLimit;
 
-    // total count for pagination
-    const total = await Booking.countDocuments(filter);
+    // Build aggregation pipeline
+    const pipeline = [];
 
-    // fetch page (sort by newest)
-    const bookings = await Booking.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate('roomId')
-      .populate('userId', 'name email');
+    // Join room
+    pipeline.push({
+      $lookup: {
+        from: "rooms",
+        localField: "roomId",
+        foreignField: "_id",
+        as: "room",
+      },
+    });
+    pipeline.push({ $unwind: { path: "$room", preserveNullAndEmptyArrays: true } });
 
-    const totalPages = Math.ceil(total / limit);
+    // Join user (booked by)
+    pipeline.push({
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "user",
+      },
+    });
+    pipeline.push({ $unwind: { path: "$user", preserveNullAndEmptyArrays: true } });
+
+    // Build match object
+    const match = { };
+
+    if (bookingType) {
+      match.bookingType = bookingType;
+    }
+
+    // Text/regex filters (case-insensitive)
+    if (qTitle) {
+      match["room.title"] = { $regex: qTitle, $options: "i" };
+    }
+    if (qLocation) {
+      // search city, state, address lines
+      match.$or = match.$or || [];
+      match.$or.push(
+        { "room.location.city": { $regex: qLocation, $options: "i" } },
+        { "room.location.state": { $regex: qLocation, $options: "i" } },
+        { "room.location.addressLine1": { $regex: qLocation, $options: "i" } },
+        { "room.location.addressLine2": { $regex: qLocation, $options: "i" } }
+      );
+    }
+    if (qBookedBy) {
+      match.$or = match.$or || [];
+      match.$or.push(
+        { "user.name": { $regex: qBookedBy, $options: "i" } },
+        { "user.email": { $regex: qBookedBy, $options: "i" } }
+      );
+    }
+
+    if (bookingDate) {
+      // Accept single date YYYY-MM-DD — match createdAt on that local date
+      const d = new Date(bookingDate);
+      if (!isNaN(d.getTime())) {
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
+        const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+        match.createdAt = { $gte: start, $lte: end };
+      }
+    }
+
+    // If we have any match criteria, add $match
+    if (Object.keys(match).length > 0) {
+      pipeline.push({ $match: match });
+    }
+
+    // Count total (for pagination)
+    const countPipeline = [...pipeline, { $count: "total" }];
+    const countRes = await Booking.aggregate(countPipeline);
+    const total = (countRes[0] && countRes[0].total) || 0;
+
+    // Sorting (latest first)
+    pipeline.push({ $sort: { createdAt: -1 } });
+
+    // Pagination
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: pageLimit });
+
+    // Project fields to return (populated room and user)
+    pipeline.push({
+      $project: {
+        _id: 1,
+        bookingType: 1,
+        bookingSource: 1,
+        checkInDate: 1,
+        checkOutDate: 1,
+        checkInTime: 1,
+        hours: 1,
+        numberOfAdult: 1,
+        numberOfChild: 1,
+        status: 1,
+        totalPrice: 1,
+        coupon: 1,
+        createdAt: 1,
+        startAt: 1,
+        endAt: 1,
+        // embed the joined room and user (select fields only)
+        room: {
+          _id: "$room._id",
+          title: "$room.title",
+          location: "$room.location",
+          images: "$room.images",
+        },
+        user: {
+          _id: "$user._id",
+          name: "$user.name",
+          email: "$user.email",
+          mobileNumber: "$user.mobileNumber",
+        },
+      },
+    });
+
+    const results = await Booking.aggregate(pipeline);
+
+    // Format to match previous shape (roomId, userId) to minimize frontend changes
+    const formatted = results.map((r) => ({
+      ...r,
+      roomId: r.room,
+      userId: r.user,
+    }));
 
     res.json({
-      bookings,
       total,
-      page,
-      totalPages,
-      limit
+      page: pageNum,
+      limit: pageLimit,
+      bookings: formatted,
     });
   } catch (err) {
     console.error('getAllBookings error', err);
     res.status(500).json({ message: 'Failed to fetch bookings', error: err.message });
   }
-};
+}; 
 
 exports.toggleCouponActive = async (req, res) => {  
   try {
