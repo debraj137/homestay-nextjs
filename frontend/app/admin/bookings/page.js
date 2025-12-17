@@ -18,6 +18,11 @@ export default function AllBookingsPage() {
   const [formData, setFormData] = useState({});
   const [saving, setSaving] = useState(false);
 
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [userDetails, setUserDetails] = useState(null);
+  const [userBookings, setUserBookings] = useState([]);
+  const [loadingUser, setLoadingUser] = useState(false);
+
   const [filters, setFilters] = useState({
     qTitle: '',
     qLocation: '',
@@ -25,6 +30,34 @@ export default function AllBookingsPage() {
     bookingDate: '', // YYYY-MM-DD
     bookingType: '', // '' | 'hourly' | 'full'
   });
+
+  async function openUserModal(userId) {
+    setShowUserModal(true);
+    setLoadingUser(true);
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE}/admin/users/${userId}/bookings`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      setUserDetails(data.user);
+      setUserBookings(data.bookings || []);
+    } catch (err) {
+      toast.error(err.message || 'Failed to load user details');
+      setShowUserModal(false);
+    } finally {
+      setLoadingUser(false);
+    }
+  }
+
 
   useEffect(() => {
     async function fetchBookings() {
@@ -110,6 +143,25 @@ export default function AllBookingsPage() {
       }
     }
 
+    //////////////////cancel validation//////////////////////
+    // 🚫 Admin cancel validation (24 hours before check-in)
+    // if (
+    //   formData.status === 'cancelled' &&
+    //   selectedBooking.status === 'confirmed'
+    // ) {
+    //   const checkIn = new Date(
+    //     selectedBooking.startAt ||
+    //     selectedBooking.checkInDate
+    //   );
+
+    //   const diffHours = (checkIn - new Date()) / (1000 * 60 * 60);
+
+    //   if (diffHours < 24) {
+    //     toast.error('Booking can only be cancelled at least 24 hours before check-in.');
+    //     return;
+    //   }
+    // }
+    //////////////////cancel validation end//////////////////////
     // Prepare body for backend. Keep only fields backend expects.
     const body = {
       bookingType: formData.bookingType,
@@ -235,7 +287,8 @@ export default function AllBookingsPage() {
                     {b.roomId?.location?.city || ''}{b.roomId?.location?.city ? ', ' : ''}
                     {b.roomId?.location?.state || ''} {b.roomId?.location?.pincode ? '- ' + b.roomId?.location?.pincode : ''}
                   </td>
-                  <td className="p-3">{b.userId?.name}</td>
+                  <td className="p-3 text-blue-600 cursor-pointer hover:underline"
+                    onClick={() => openUserModal(b.userId?._id)}>{b.userId?.name}</td>
                   <td className="p-3">{b.createdAt ? new Date(b.createdAt).toLocaleString('en-IN') : '—'}</td>
                   {/* Booking Type */}
                   <td className="p-3 capitalize">
@@ -463,6 +516,88 @@ export default function AllBookingsPage() {
           </div>
         </div>
       )}
+
+      {showUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowUserModal(false)}
+          />
+
+          <div className="relative bg-white rounded-xl shadow-2xl w-[95%] max-w-3xl p-6 z-10">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-xl font-bold">User Details</h2>
+                <p className="text-sm text-gray-500">
+                  Booking history of this user
+                </p>
+              </div>
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="p-1 rounded hover:bg-gray-100"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            {loadingUser ? (
+              <p className="text-center py-8 text-gray-500">Loading...</p>
+            ) : (
+              <>
+                {/* User info */}
+                <div className="mb-4 border rounded p-4 bg-gray-50">
+                  <p><strong>Name:</strong> {userDetails?.name}</p>
+                  <p><strong>Email:</strong> {userDetails?.email}</p>
+                  <p><strong>Mobile:</strong> {userDetails?.mobileNumber || '—'}</p>
+                </div>
+
+                {/* User bookings */}
+                <div className="max-h-80 overflow-y-auto border rounded">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-100 sticky top-0">
+                      <tr>
+                        <th className="p-2 text-left">Room</th>
+                        <th className="p-2 text-left">Check-in</th>
+                        <th className="p-2 text-left">Check-out</th>
+                        <th className="p-2 text-left">Status</th>
+                        <th className="p-2 text-left">Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {userBookings.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="p-4 text-center text-gray-500">
+                            No bookings found
+                          </td>
+                        </tr>
+                      ) : (
+                        userBookings.map((bk) => (
+                          <tr key={bk._id} className="border-t">
+                            <td className="p-2">{bk.roomId?.title}</td>
+                            <td className="p-2">
+                              {bk.checkInDate
+                                ? new Date(bk.checkInDate).toLocaleDateString()
+                                : '—'}
+                            </td>
+                            <td className="p-2">
+                              {bk.checkOutDate
+                                ? new Date(bk.checkOutDate).toLocaleDateString()
+                                : '—'}
+                            </td>
+                            <td className="p-2 capitalize">{bk.status}</td>
+                            <td className="p-2 font-semibold">₹{bk.totalPrice}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -525,7 +525,65 @@ exports.modifyBookingByAdmin = async (req, res) => {
       booking.numberOfAdult = Number(numberOfAdult);
     if (typeof numberOfChild !== "undefined")
       booking.numberOfChild = Number(numberOfChild);
-    if (status) booking.status = status;
+    // if (status) booking.status = status;
+    // -----------------------------
+    // ADMIN cancellation validation (24-hour rule)
+    // -----------------------------
+    if (status === "cancelled" && booking.status !== "cancelled") {
+      // Determine check-in time
+      const checkInTime = booking.startAt || booking.checkInDate;
+      const now = new Date();
+      console.log('checkInDate:', booking.checkInDate, ' startAt:', booking.startAt);
+      console.log("chekckInTime:", checkInTime, " now:", now);
+      // const diffHours = (checkInTime - now) / (1000 * 60 * 60); 
+      const diffHours = (booking.checkInDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+      if (diffHours < 24) {
+        console.log("Admin cancellation denied: less than 24 hours to check-in", diffHours);
+        return res.status(400).json({
+          message: "Admin can cancel booking only before 24 hours of check-in time",
+        });
+      }
+
+      booking.status = "cancelled";
+    }
+
+
+    // Send cancellation email to user if cancelled by admin
+    if (status === "cancelled" && booking.status === "cancelled") {
+      const user = await User.findById(booking.userId);
+      const room = await Room.findById(booking.roomId);
+
+      if (user?.email) {
+        await transporter.sendMail({
+          from: process.env.EMAIL_USER,
+          to: user.email,
+          subject: "Booking Cancelled by Admin - Awadh Hotels",
+          html: `
+        <div style="font-family: Arial, sans-serif; max-width:600px; margin:auto;">
+          <h2 style="color:#b91c1c;">Booking Cancelled</h2>
+          <p>Hello <strong>${user.name}</strong>,</p>
+          <p>
+            Your booking for <strong>${room.title}</strong> has been
+            <strong>cancelled by our admin team</strong>.
+          </p>
+          <p>
+            <strong>Check-in:</strong> ${new Date(booking.checkInDate).toDateString()}<br/>
+            <strong>Check-out:</strong> ${new Date(booking.checkOutDate).toDateString()}
+          </p>
+          <p>
+            If you have already made a payment, our support team will assist you
+            with the refund as per policy.
+          </p>
+          <p style="margin-top:20px;">
+            Regards,<br/>
+            <strong>Awadh Hotels Support</strong>
+          </p>
+        </div>
+      `,
+        });
+      }
+    }
+
 
     await booking.save();
 

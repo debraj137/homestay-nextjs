@@ -429,3 +429,28 @@ exports.updateCoupon = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+
+// Get user details + all bookings by that user
+exports.getUserWithBookings = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).select('name email mobileNumber');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const bookings = await Booking.find({ userId })
+      .populate('roomId', 'title location')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      user,
+      bookings,
+    });
+  } catch (err) {
+    console.error('getUserWithBookings error', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
