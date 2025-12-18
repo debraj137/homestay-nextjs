@@ -9,7 +9,9 @@ const roomSchema = new mongoose.Schema({
     addressLine2: { type: String },
     city: { type: String, required: true },
     state: { type: String, required: true },
-    pincode: { type: String, required: true }
+    pincode: { type: String, required: true },
+    locality: { type: String },
+    nearestLocalities: [{ type: String }]
   },
   price: { type: Number, required: true },
   discount: { type: Number, default: 0 },
