@@ -158,11 +158,23 @@ exports.getDistinctAmenities = async (req, res) => {
 // ✅ Filter rooms by price, amenities, and rating
 exports.filterRooms = async (req, res) => {
   try {
-    const { maxPrice, amenities, minRating } = req.body;
+    const { maxPrice, amenities, minRating, nearbyArea, city  } = req.body;
     let query = { isApproved: true, isAvailable: true };
+    // city (keep consistent with search)
+    if (city) {
+      query["location.city"] = city;
+    }
 
     if (maxPrice) query.price = { $lte: Number(maxPrice) };
     if (amenities && amenities.length > 0) query.amenities = { $all: amenities };
+
+    // ✅ NEW: Nearby Area filter
+    if (nearbyArea) {
+      query.$or = [
+        { "location.locality": { $regex: nearbyArea, $options: "i" } },
+        { "location.nearestLocalities": { $regex: nearbyArea, $options: "i" } },
+      ];
+    }
 
     const rooms = await Room.find(query).lean();
     if (rooms.length === 0) return res.json([]);

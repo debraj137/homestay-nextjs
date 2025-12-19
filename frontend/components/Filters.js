@@ -100,7 +100,7 @@ export default function Filters({ onApply }) {
   const [amenities, setAmenities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [minRating, setMinRating] = useState(null); // ⭐ new state
-
+  const [nearbyArea, setNearbyArea] = useState("");
   // Fetch distinct amenities
   useEffect(() => {
     async function fetchAmenities() {
@@ -127,7 +127,7 @@ export default function Filters({ onApply }) {
   };
 
   const handleApply = () => {
-    onApply({ maxPrice: price, amenities: selectedAmenities, minRating });
+    onApply({ maxPrice: price, amenities: selectedAmenities, minRating, nearbyArea });
   };
 
   return (
@@ -172,6 +172,21 @@ export default function Filters({ onApply }) {
           </div>
         )}
       </div>
+
+      {/* Nearby Area */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">
+          Nearby Area
+        </label>
+        <input
+          type="text"
+          placeholder="e.g. Ram Mandir, Railway Station"
+          value={nearbyArea}
+          onChange={(e) => setNearbyArea(e.target.value)}
+          className="w-full border rounded p-2"
+        />
+      </div>
+
 
       {/* ⭐ Minimum Rating */}
       <div className="mb-6">

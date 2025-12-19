@@ -183,6 +183,7 @@ export default function HomestaysPage() {
         maxPrice: filters.maxPrice ?? null,
         amenities: filters.amenities ?? [],
         minRating: filters.minRating ?? null,
+        nearbyArea: filters.nearbyArea ?? null,
       };
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/filter`, {
         method: 'POST',

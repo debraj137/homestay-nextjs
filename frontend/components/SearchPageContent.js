@@ -667,6 +667,8 @@ export default function SearchPageContent() {
           maxPrice: filters.maxPrice ?? null,
           amenities: filters.amenities ?? [],
           minRating: filters.minRating ?? null,
+          nearbyArea: filters.nearbyArea ?? null, // ✅ NEW
+          city, // IMPORTANT
           city,
           checkInDate,
           checkOutDate,
