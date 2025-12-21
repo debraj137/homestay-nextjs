@@ -1,7 +1,9 @@
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Room = require('../models/Room');
 const Booking = require('../models/Booking'); // import your Booking model
 const Coupon = require('../models/Coupon');
+const BookingController = require('./bookingsController'); 
 exports.getOwnersWithPendingRooms = async (req, res) => {
   try {
     const owners = await Room.find({ isApproved: false })
@@ -193,7 +195,7 @@ exports.getAllBookings = async (req, res) => {
     } = req.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const pageLimit = Math.min(200, parseInt(limit, 10) || 25); 
+    const pageLimit = Math.min(200, parseInt(limit, 10) || 25);
     const skip = (pageNum - 1) * pageLimit;
 
     // Build aggregation pipeline
@@ -222,7 +224,7 @@ exports.getAllBookings = async (req, res) => {
     pipeline.push({ $unwind: { path: "$user", preserveNullAndEmptyArrays: true } });
 
     // Build match object
-    const match = { };
+    const match = {};
 
     if (bookingType) {
       match.bookingType = bookingType;
@@ -330,11 +332,11 @@ exports.getAllBookings = async (req, res) => {
     console.error('getAllBookings error', err);
     res.status(500).json({ message: 'Failed to fetch bookings', error: err.message });
   }
-}; 
+};
 
-exports.toggleCouponActive = async (req, res) => {  
+exports.toggleCouponActive = async (req, res) => {
   try {
-    console.log('toggleCouponActive called',req.user);
+    console.log('toggleCouponActive called', req.user);
     if (!req.user || req.user.role !== 'admin') return res.status(403).json({ message: 'Admin required' });
     const { couponId } = req.params;
     const { isActive } = req.body;
@@ -454,3 +456,159 @@ exports.getUserWithBookings = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+
+
+
+exports.getApprovedAvailableRooms = async (req, res) => {
+  try {
+    const rooms = await Room.find({
+      isApproved: true,
+      isAvailable: true,
+    }).sort({ createdAt: -1 });
+
+    res.json(rooms);
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q) return res.json([]);
+
+    const users = await User.find({
+      $or: [
+        { name: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } },
+        { mobileNumber: { $regex: q, $options: 'i' } },
+      ],
+    })
+      .select('name email mobileNumber')
+      .limit(10);
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to search users' });
+  }
+};
+
+// ✅ Admin books room for guest
+exports.bookRoomForGuest = async (req, res) => {
+  try {
+    const {
+      roomId,
+      userId, // optional
+      guest,
+      checkInDate,
+      checkOutDate,
+      numberOfAdult,
+      numberOfChild,
+    } = req.body;
+
+    // -------------------------
+    // 1️⃣ Basic validation
+    // -------------------------
+    if (!roomId || !checkInDate || !checkOutDate) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+
+    if (checkIn >= checkOut) {
+      return res.status(400).json({
+        message: 'Check-out date must be after check-in date',
+      });
+    }
+
+    // -------------------------
+    // 2️⃣ Check room availability FIRST
+    // -------------------------
+    const overlappingBooking = await Booking.findOne({
+      roomId,
+      status: 'confirmed',
+      checkInDate: { $lt: checkOut },
+      checkOutDate: { $gt: checkIn },
+    });
+
+    if (overlappingBooking) {
+      return res.status(400).json({
+        message: 'Room already booked for selected dates',
+      });
+    }
+
+    // -------------------------
+    // 3️⃣ Load room & calculate price
+    // -------------------------
+    const room = await Room.findById(roomId);
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    const nights = Math.max(
+      1,
+      (checkOut - checkIn) / (1000 * 60 * 60 * 24)
+    );
+
+    const basePrice =
+      room.discount > 0
+        ? Math.round(room.price * (1 - room.discount / 100))
+        : room.price;
+
+    const totalPrice = basePrice * nights;
+
+    // -------------------------
+    // 4️⃣ Resolve user (ONLY NOW)
+    // -------------------------
+    let finalUserId = userId;
+
+    if (!finalUserId) {
+      // Check again by email (safety)
+      let existingUser = await User.findOne({ email: guest.email });
+
+      if (existingUser) {
+        finalUserId = existingUser._id;
+      } else {
+        const hashedPassword = await bcrypt.hash('TEMP_PASSWORD', 10);
+
+        const newUser = await User.create({
+          name: guest.name,
+          email: guest.email,
+          mobileNumber: guest.mobileNumber,
+          password: hashedPassword,
+          emailVerified: true,
+          mobileVerified: true,
+        });
+
+        finalUserId = newUser._id;
+      }
+    }
+
+    // -------------------------
+    // 5️⃣ Create booking
+    // -------------------------
+    const booking = await Booking.create({
+      userId: finalUserId,
+      roomId,
+      checkInDate: checkIn,
+      checkOutDate: checkOut,
+      numberOfAdult,
+      numberOfChild,
+      totalPrice,
+      mobileNumber: guest.mobileNumber,
+      status: 'confirmed',
+    });
+
+    return res.status(201).json({
+      message: 'Booking created successfully',
+      booking,
+    });
+  } catch (err) {
+    console.error('Admin booking error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+

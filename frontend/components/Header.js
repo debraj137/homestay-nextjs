@@ -38,6 +38,7 @@ export default function Header() {
         <nav className="hidden md:flex items-center space-x-6 text-sm">
           {user?.role === 'admin' ? (
             <>
+              <Link href="/admin/rooms" className="hover:text-red-500">All Properties</Link>
               <Link href="/admin/coupons" className="hover:text-red-500">Coupons</Link>
               <Link href="/admin/pending-property" className="hover:text-red-500">Pending Property</Link>
               <Link href="/admin/approved-property" className="hover:text-red-500">Approved Property</Link>
@@ -93,6 +94,7 @@ export default function Header() {
           <div className="flex flex-col space-y-3">
             {user?.role === 'admin' ? (
               <>
+                <Link href="/admin/rooms" onClick={handleNavClick} className="block hover:text-red-500">All Properties</Link>
                 <Link href="/admin/coupons" onClick={handleNavClick} className="block hover:text-red-500">Coupons</Link>
                 <Link href="/admin/pending-property" onClick={handleNavClick} className="block hover:text-red-500">Pending Property</Link>
                 <Link href="/admin/approved-property" onClick={handleNavClick} className="block hover:text-red-500">Approved Property</Link>

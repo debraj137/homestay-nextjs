@@ -190,6 +190,7 @@ exports.login = async (req, res) => {
 
     // Find user
     const user = await User.findOne({ email });
+    console.log("Login attempt for user:", user);
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     // Check if verified
@@ -199,6 +200,8 @@ exports.login = async (req, res) => {
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log(password, user.password);
+    console.log("Password match:", isMatch);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     // Generate JWT

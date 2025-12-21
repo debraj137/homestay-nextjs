@@ -1,18 +1,21 @@
 // routes/adminRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getOwnersWithPendingRooms, 
-    getPendingRoomsByOwner, 
+const { getOwnersWithPendingRooms,
+    getPendingRoomsByOwner,
     updateRoomApproval,
-    getOwnersWithApprovedRooms, 
-    getApprovedRoomsByOwner, 
-    updateRoomCategory, 
-    getAllOwners, 
+    getOwnersWithApprovedRooms,
+    getApprovedRoomsByOwner,
+    updateRoomCategory,
+    getAllOwners,
     getRoomsByOwner,
     getAllBookings,
     toggleCouponActive,
     updateCoupon,
-    getUserWithBookings 
+    getUserWithBookings,
+    getApprovedAvailableRooms,
+    bookRoomForGuest,
+    searchUsers
 } = require('../controllers/adminController');
 const authMiddleware = require("../middleware/authMiddleware");
 // List owners with pending rooms
@@ -37,7 +40,11 @@ router.get('/owner/:ownerId/rooms', getRoomsByOwner);
 
 router.get('/bookings', getAllBookings);
 // enable toggling coupon active from admin UI
-router.put('/coupons/:couponId/active',authMiddleware, toggleCouponActive);
-router.put('/coupons/:couponId',authMiddleware, updateCoupon);
+router.put('/coupons/:couponId/active', authMiddleware, toggleCouponActive);
+router.put('/coupons/:couponId', authMiddleware, updateCoupon);
 router.get('/users/:userId/bookings', authMiddleware, getUserWithBookings);
+router.get('/rooms/', getApprovedAvailableRooms);
+// router.post('/book-room', authMiddleware, adminBookRoomForGuest);
+router.get('/users/search', searchUsers);
+router.post('/book-for-guest', bookRoomForGuest);
 module.exports = router;

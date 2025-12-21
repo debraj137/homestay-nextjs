@@ -224,7 +224,7 @@ export default function AllBookingsPage() {
         </div>
 
         <div>
-          <label className="text-xs text-gray-600">Booked by</label>
+          <label className="text-xs text-gray-600">Guest Name</label>
           <input type="text" value={filters.qBookedBy} onChange={(e) => setFilters(f => ({ ...f, qBookedBy: e.target.value }))} placeholder="User name or email" className="border px-3 py-2 rounded w-60" />
         </div>
 
@@ -254,7 +254,7 @@ export default function AllBookingsPage() {
             <tr>
               <th className="p-3 text-left">Room Title</th>
               <th className="p-3 text-left">Address</th>
-              <th className="p-3 text-left">Booked By</th>
+              <th className="p-3 text-left">Guest Name</th>
               <th className="p-3 text-left">Booking Date</th>
               <th className="p-3 text-left">Booking Type</th>
               <th className="p-3 text-left">Check-In Time</th>

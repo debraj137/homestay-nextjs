@@ -92,6 +92,7 @@ function validateHourlyRules(startAt, hours) {
 }
 
 exports.createBooking = async (req, res) => {
+  console.log("Create booking request body:", req.body);
   try {
     const {
       userId,
