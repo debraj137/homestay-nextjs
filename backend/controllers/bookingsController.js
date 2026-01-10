@@ -5,7 +5,7 @@ const Coupon = require('../models/Coupon');
 const { bookingConfirmationTemplate, ownerNotificationTemplate } = require('../utils/emailTemplates');
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
-
+const { sendSms } = require('../utils/sendSms');
 // ✅ Email transporter (using Gmail or any SMTP)
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -334,7 +334,7 @@ exports.createBooking = async (req, res) => {
         html: ownerNotificationTemplate(populatedRoom.ownerId, userDoc, populatedRoom, booking),
       });
     }
-
+      //  const smsMessage = 'hello'; 
     const smsMessage = `Booking Confirmed: ${populatedRoom?.title}, ${startStr} - ${endStr}, Guests: ${numberOfAdult}A/${numberOfChild}C, ₹${booking.totalPrice}`;
     // if (userDoc?.mobileNumber) {
     //   try {
@@ -359,10 +359,24 @@ exports.createBooking = async (req, res) => {
     //   }
     // }
 
+    if (userDoc?.mobileNumber) {
+      await sendSms({
+        to: userDoc.mobileNumber,
+        message: smsMessage,
+      });
+    }
+    // if (populatedRoom?.ownerId?.mobileNumber) {
+    //   await sendSms({
+    //     to: populatedRoom.ownerId.mobileNumber,
+    //     message: `New Booking: ${populatedRoom?.title}, ${startStr} - ${endStr}.`,
+    //   });
+    // }
+
+
     res.status(201).json(booking);
   } catch (err) {
-    console.error("Booking creation error:", err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error("Booking creation error:", err); 
+    res.status(500).json({ message: 'Server error', error: err.message }); 
   }
 };
 
