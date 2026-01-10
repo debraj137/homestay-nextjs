@@ -31,7 +31,15 @@ export default function BookForGuestPage() {
     const [submitting, setSubmitting] = useState(false);
 
     const handleGuestSearch = async (value) => {
-        setGuest({ ...guest, name: value });
+        // setGuest({ ...guest, name: value });
+        setGuest(prev => ({
+            ...prev,
+            name: value,
+        }));
+
+        // 🔴 VERY IMPORTANT: user is manually typing → clear selected user
+        setSelectedUserId(null);
+
 
         if (value.length < 2) {
             setSearchResults([]);
@@ -174,14 +182,22 @@ export default function BookForGuestPage() {
                     placeholder="Guest Email"
                     className="w-full border p-2 rounded"
                     value={guest.email}
-                    onChange={(e) => setGuest({ ...guest, email: e.target.value })}
+                    // onChange={(e) => setGuest({ ...guest, email: e.target.value })}
+                    onChange={(e) => {
+                        setGuest({ ...guest, email: e.target.value });
+                        setSelectedUserId(null);
+                    }}
                 />
                 <input
                     type="text"
                     placeholder="Guest Mobile Number"
                     className="w-full border p-2 rounded"
                     value={guest.mobileNumber}
-                    onChange={(e) => setGuest({ ...guest, mobileNumber: e.target.value })}
+                    // onChange={(e) => setGuest({ ...guest, mobileNumber: e.target.value })}
+                    onChange={(e) => {
+                        setGuest({ ...guest, mobileNumber: e.target.value });
+                        setSelectedUserId(null);
+                    }}
                 />
             </div>
 

@@ -528,9 +528,9 @@ export default function AllBookingsPage() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-xl font-bold">User Details</h2>
-                <p className="text-sm text-gray-500">
+                {/* <p className="text-sm text-gray-500">
                   Booking history of this user
-                </p>
+                </p> */}
               </div>
               <button
                 onClick={() => setShowUserModal(false)}
@@ -550,7 +550,9 @@ export default function AllBookingsPage() {
                   <p><strong>Email:</strong> {userDetails?.email}</p>
                   <p><strong>Mobile:</strong> {userDetails?.mobileNumber || '—'}</p>
                 </div>
-
+                <h3 className="mb-2 text-lg font-semibold text-gray-700">
+                  Booking history of this user
+                </h3>
                 {/* User bookings */}
                 <div className="max-h-80 overflow-y-auto border rounded">
                   <table className="w-full text-sm">
