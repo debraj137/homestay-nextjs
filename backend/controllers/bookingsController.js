@@ -199,26 +199,53 @@ exports.createBooking = async (req, res) => {
     if (!room) return res.status(404).json({ message: 'Room not found' });
 
     // Apply room-level discount (if present)
-    const roomBasePrice = room.discount && room.discount > 0
-      ? Math.round(room.price * (1 - room.discount / 100))
-      : room.price;
+    // const roomBasePrice = room.discount && room.discount > 0
+    //   ? Math.round(room.price * (1 - room.discount / 100))
+    //   : room.price;
 
     // Compute original price depending on booking type (same formula as frontend)
-    let originalPrice = 0;
+    // let originalPrice = 0;
+    // if (bookingType === 'hourly' && hours) {
+    //   if (hours <= 3) {
+    //     originalPrice = roomBasePrice / 4;
+    //   } else {
+    //     originalPrice = roomBasePrice / 4 + (roomBasePrice / 12) * (hours - 3);
+    //   }
+    //   originalPrice = Math.round(originalPrice);
+    // } else {
+    //   const nights = Math.max(
+    //     1,
+    //     (checkOut - checkIn) / (1000 * 60 * 60 * 24)
+    //   );
+    //   originalPrice = roomBasePrice * nights;
+    // }
+
+    // ===============================
+    // ACTUAL PRICE (NO DISCOUNT)
+    // ===============================
+    let actualPrice = 0;
+
     if (bookingType === 'hourly' && hours) {
       if (hours <= 3) {
-        originalPrice = roomBasePrice / 4;
+        actualPrice = room.price / 4;
       } else {
-        originalPrice = roomBasePrice / 4 + (roomBasePrice / 12) * (hours - 3);
+        actualPrice = room.price / 4 + (room.price / 12) * (hours - 3);
       }
-      originalPrice = Math.round(originalPrice);
+      actualPrice = Math.round(actualPrice);
     } else {
       const nights = Math.max(
         1,
         (checkOut - checkIn) / (1000 * 60 * 60 * 24)
       );
-      originalPrice = roomBasePrice * nights;
+      actualPrice = room.price * nights;
     }
+
+    // ROOM DISCOUNT (used ONLY if coupon NOT applied)
+    const roomDiscountSaving =
+      room.discount > 0
+        ? Math.round((actualPrice * room.discount) / 100)
+        : 0;
+
 
     // ===== Coupon handling: validate and compute discount using originalPrice (server-side) =====
     let coupon = null;
@@ -244,7 +271,7 @@ exports.createBooking = async (req, res) => {
       }
 
       // min booking amount: check against server-side originalPrice (NOT client totalPrice)
-      if (originalPrice < (coupon.minBookingAmount || 0)) {
+      if (actualPrice < (coupon.minBookingAmount || 0)) {
         return res.status(400).json({ message: `Minimum booking amount for this coupon is ${coupon.minBookingAmount}` });
       }
 
@@ -257,14 +284,23 @@ exports.createBooking = async (req, res) => {
       // compute discountAmount based on originalPrice
       if (coupon.discountType === 'percent') {
         const pct = Math.min(Math.max(coupon.discountValue, 0), 100);
-        discountAmount = Math.round((originalPrice * (pct / 100)) * 100) / 100;
+        discountAmount = Math.round((actualPrice * (pct / 100)) * 100) / 100;
       } else {
-        discountAmount = Math.min(originalPrice, coupon.discountValue);
+        discountAmount = Math.min(actualPrice, coupon.discountValue);
       }
     }
 
     // Final price computed server-side
-    const finalPrice = Math.round((originalPrice - discountAmount) * 100) / 100;
+    let finalPrice;
+
+    if (coupon && discountAmount > 0) {
+      // coupon overrides room discount
+      finalPrice = actualPrice - discountAmount;
+    } else {
+      finalPrice = actualPrice - roomDiscountSaving;
+    }
+
+    finalPrice = Math.max(0, Math.round(finalPrice));
 
     // Prepare booking object (include coupon snapshot if present)
     const bookingData = {
@@ -334,7 +370,7 @@ exports.createBooking = async (req, res) => {
         html: ownerNotificationTemplate(populatedRoom.ownerId, userDoc, populatedRoom, booking),
       });
     }
-      //  const smsMessage = 'hello'; 
+    //  const smsMessage = 'hello'; 
     const smsMessage = `Booking Confirmed: ${populatedRoom?.title}, ${startStr} - ${endStr}, Guests: ${numberOfAdult}A/${numberOfChild}C, ₹${booking.totalPrice}`;
     // if (userDoc?.mobileNumber) {
     //   try {
@@ -375,8 +411,8 @@ exports.createBooking = async (req, res) => {
 
     res.status(201).json(booking);
   } catch (err) {
-    console.error("Booking creation error:", err); 
-    res.status(500).json({ message: 'Server error', error: err.message }); 
+    console.error("Booking creation error:", err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
