@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();   
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -18,7 +18,7 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  async function handleSubmit(e) {     
+  async function handleSubmit(e) {
     e.preventDefault();
     setMessage('');
 
@@ -107,6 +107,15 @@ export default function LoginPage() {
             >
               Login
             </button>
+            {/* Forgot Password */}
+            <div className="text-center">
+              <a
+                href="/forgot-password"
+                className="text-sm text-red-500 hover:underline font-medium"
+              >
+                Forgot password?
+              </a>
+            </div>
           </form>
 
           {/* Signup Redirect */}

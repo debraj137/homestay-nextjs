@@ -466,3 +466,85 @@ exports.resendMobileOtp = async (req, res) => {
   }
 };
 
+// SEND FORGOT PASSWORD OTP
+exports.sendForgotPasswordOtp = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const emailOtp = generateOtp();
+    const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.emailOtp = emailOtp;
+    user.emailOtpExpiry = expiry;
+    await user.save();
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Reset Your Password",
+      text: `Your password reset OTP is ${emailOtp}. Valid for 10 minutes.`,
+    });
+
+    res.json({ message: "OTP sent to email for password reset" });
+  } catch (err) {
+    console.error("Forgot password OTP error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// VERIFY FORGOT PASSWORD OTP
+exports.verifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const now = new Date();
+    if (!user.emailOtp || user.emailOtp !== otp || user.emailOtpExpiry < now) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // OTP verified – just clear OTP
+    user.emailOtp = null;
+    user.emailOtpExpiry = null;
+    await user.save();
+
+    res.json({ message: "OTP verified successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// RESET PASSWORD
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password reset successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
