@@ -50,6 +50,8 @@ const bookingSchema = new mongoose.Schema({
   numberOfChild: { type: Number, required: true },
 
   // keep totalPrice for display and accounting
+  subtotal: { type: Number },
+  roomDiscountAmount: { type: Number, default: 0 },
   totalPrice: { type: Number, required: true },
 
   // coupon snapshot (optional)

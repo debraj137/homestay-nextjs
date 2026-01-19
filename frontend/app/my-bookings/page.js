@@ -14,11 +14,12 @@
 //   const [loading, setLoading] = useState(true);
 //   const [showCancelModal, setShowCancelModal] = useState(false);
 //   const [bookingToCancel, setBookingToCancel] = useState(null);
+
 //   useEffect(() => {
 //     if (!user) {
 //       router.push('/login');
 //       return;
-//     };
+//     }
 
 //     async function fetchBookings() {
 //       try {
@@ -44,8 +45,6 @@
 //   }, [user, router]);
 
 //   async function handleCancelBooking(bookingId) {
-//     // if (!confirm("Are you sure you want to cancel this booking?")) return;
-
 //     try {
 //       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/bookings/${bookingId}/cancel`, {
 //         method: "PUT",
@@ -87,20 +86,35 @@
 //       ) : (
 //         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 //           {bookings.map((booking) => {
-//             const room = booking.roomId;
+//             const room = booking.roomId || {};
 //             const loc = room?.location || {};
+
 //             // Booking date: prefer createdAt, fallback to ObjectId timestamp if createdAt missing
 //             const bookingDate = booking.createdAt
 //               ? new Date(booking.createdAt).toLocaleString()
 //               : (() => {
 //                 try {
-//                   // ObjectId first 8 chars = seconds since epoch (hex)
 //                   const ts = parseInt(booking._id.toString().substring(0, 8), 16) * 1000;
 //                   return new Date(ts).toLocaleString();
 //                 } catch (e) {
 //                   return 'N/A';
 //                 }
 //               })();
+
+//             // Determine amounts
+//             // server may provide: subtotal, totalPrice (final), coupon.discountAmount
+//             const finalAmount = Number(booking.totalPrice ?? 0);
+//             const couponDiscount = Number(booking.coupon?.discountAmount ?? booking.coupon?.discountAmount === 0 ? booking.coupon.discountAmount : 0);
+//             const subtotalFromServer = booking.subtotal ?? null;
+
+//             // compute original amount (best-effort)
+//             const originalAmount = subtotalFromServer !== null
+//               ? Number(subtotalFromServer)
+//               : (couponDiscount > 0 ? (finalAmount + couponDiscount) : finalAmount);
+
+//             const savedAmount = originalAmount - finalAmount;
+//             const couponCode = booking.coupon?.code || null;
+
 //             return (
 //               <div
 //                 key={booking._id}
@@ -125,59 +139,88 @@
 
 //                 {/* Details */}
 //                 <div className="p-4">
-//                   <h2 className="text-lg font-semibold mb-1">
-//                     <Link
-//                       href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
-//                       className="hover:text-red-500 transition-colors duration-200"
-//                     >
-//                       {room?.title}
-//                     </Link>
-//                   </h2>
+//                   <div className="flex justify-between items-start gap-4">
+//                     <div className="flex-1 min-w-0">
+//                       <h2 className="text-lg font-semibold mb-1 truncate">
+//                         <Link
+//                           href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
+//                           className="hover:text-red-500 transition-colors duration-200"
+//                         >
+//                           {room?.title}
+//                         </Link>
+//                       </h2>
 
-//                   {/* Full Address */}
-//                   <p className="flex items-start text-xs text-gray-600 mb-2">
-//                     <MapPin className="h-3 w-3 mr-1 mt-0.5" />
-//                     <span>
-//                       {loc.addressLine1 || ''}{loc.addressLine1 && ', '}
-//                       {loc.addressLine2 || ''}{loc.addressLine2 && ', '}
-//                       {loc.city || ''}, {loc.state || ''} - {loc.pincode || ''}
-//                     </span>
-//                   </p>
+//                       {/* Full Address */}
+//                       <p className="flex items-start text-xs text-gray-600 mb-2">
+//                         <MapPin className="h-3 w-3 mr-1 mt-0.5" />
+//                         <span className="truncate">
+//                           {loc.addressLine1 || ''}{loc.addressLine1 && ', '}
+//                           {loc.addressLine2 || ''}{loc.addressLine2 && ', '}
+//                           {loc.city || ''}, {loc.state || ''} {loc.pincode ? `- ${loc.pincode}` : ''}
+//                         </span>
+//                       </p>
 
-//                   {/* Dates */}
-//                   <div className="text-xs text-gray-700 space-y-1">
-//                     {/* Check-in / Check-out (or hourly) */}
-//                     <div className="flex items-center">
-//                       <Calendar className="h-3 w-3 mr-1" />
-//                       <span className="truncate">
-//                         {booking.bookingType === 'hourly' ? (
-//                           <>
-//                             {new Date(booking.checkInDate).toLocaleString()} → {new Date(booking.checkOutDate).toLocaleString()} ({booking.durationHours} hrs)
-//                           </>
-//                         ) : (
-//                           <>
-//                             {new Date(booking.checkInDate).toLocaleDateString()} → {new Date(booking.checkOutDate).toLocaleDateString()}
-//                           </>
-//                         )}
-//                       </span>
+//                       {/* Dates block separated into rows to avoid overlap */}
+//                       <div className="text-xs text-gray-700 space-y-1 mb-2">
+//                         <div className="flex items-center">
+//                           <Calendar className="h-3 w-3 mr-2 text-gray-500" />
+//                           {booking.bookingType === 'hourly' ? (
+//                             <span className="truncate">
+//                               {new Date(booking.checkInDate).toLocaleString()} → {new Date(booking.checkOutDate).toLocaleString()}
+//                               {booking.durationHours ? ` (${booking.durationHours} hrs)` : ''}
+//                             </span>
+//                           ) : (
+//                             <span>
+//                               {new Date(booking.checkInDate).toLocaleDateString()} → {new Date(booking.checkOutDate).toLocaleDateString()}
+//                             </span>
+//                           )}
+//                         </div>
+
+//                         <div className="flex items-center">
+//                           <Calendar className="h-3 w-3 mr-2 text-gray-500" />
+//                           <span className="text-gray-600">Booking date:</span>
+//                           <span className="ml-2 font-medium text-gray-800 truncate">{bookingDate}</span>
+//                         </div>
+//                       </div>
+
+//                       {/* Guests */}
+//                       <p className="flex items-center text-xs text-gray-700 mb-3">
+//                         <Users className="h-3 w-3 mr-2" />
+//                         {booking.numberOfAdult} Adults, {booking.numberOfChild} Children
+//                       </p>
 //                     </div>
 
-//                     {/* Booking created date (separate line so it won't overlap) */}
-//                     <div className="flex items-center text-gray-600">
-//                       <Calendar className="h-3 w-3 mr-1" />
-//                       <span className="ml-0 font-medium text-gray-800 truncate" title={bookingDate}>
-//                         Booking Date: {bookingDate}
-//                       </span>
+//                     {/* Price summary on right */}
+//                     <div className="flex-shrink-0 text-right w-36">
+//                       {/* Original amount (strike-through) */}
+//                       {originalAmount > finalAmount && (
+//                         <div className="text-sm text-gray-400 line-through">
+//                           ₹{Number(originalAmount).toLocaleString('en-IN')}
+//                         </div>
+//                       )}
+
+//                       {/* Final amount */}
+//                       <div className="text-2xl font-bold text-indigo-600">
+//                         ₹{Number(finalAmount).toLocaleString('en-IN')}
+//                       </div>
+
+//                       {/* You saved */}
+//                       {savedAmount > 0 && (
+//                         <div className="text-sm text-green-600 font-medium mt-1">
+//                           You saved ₹{Number(savedAmount).toLocaleString('en-IN')}
+//                         </div>
+//                       )}
+
+//                       {/* Coupon code */}
+//                       {couponCode && (
+//                         <div className="text-xs text-gray-600 mt-1">
+//                           Coupon: <span className="font-medium text-gray-800">{couponCode}</span>
+//                         </div>
+//                       )}
 //                     </div>
 //                   </div>
 
-//                   {/* Guests */}
-//                   <p className="flex items-center text-xs text-gray-700">
-//                     <Users className="h-3 w-3 mr-1" />
-//                     {booking.numberOfAdult} Adults, {booking.numberOfChild} Children
-//                   </p>
-
-//                   {/* Footer */}
+//                   {/* Footer badges and actions */}
 //                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
 //                     <div className="flex items-center gap-2">
 //                       <span
@@ -196,7 +239,6 @@
 //                       </span>
 //                     </div>
 
-//                     {/* Updated: show original amount, discount, final and coupon code */}
 //                     <div className="flex items-center gap-3">
 //                       {canCancelBooking(booking) && (
 //                         <button
@@ -209,51 +251,10 @@
 //                           Cancel
 //                         </button>
 //                       )}
-
-//                       {/* compute values (works inside JSX) */}
-//                       {(() => {
-//                         const finalAmount = Number(booking.totalPrice || 0);
-//                         // try to use a stored subtotal; otherwise derive it from coupon info if possible
-//                         const discountFromCoupon = booking.coupon?.discountAmount
-//                           ? Number(booking.coupon.discountAmount)
-//                           : null;
-
-//                         const subtotalStored = booking.subtotal != null ? Number(booking.subtotal) : null;
-
-//                         // if subtotal not provided, but coupon discount available, derive original
-//                         const originalAmount = subtotalStored ?? (discountFromCoupon ? finalAmount + discountFromCoupon : null);
-
-//                         // fallback discount computed from subtotal - final
-//                         const discountAmount = discountFromCoupon ?? (subtotalStored ? Math.round((subtotalStored - finalAmount) * 100) / 100 : 0);
-
-//                         return (
-//                           <div className="text-right">
-//                             {originalAmount !== null && (
-//                               <div className="text-sm text-gray-500 line-through">
-//                                 ₹{originalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-//                               </div>
-//                             )}
-
-//                             <div className="text-lg font-bold text-indigo-600">
-//                               ₹{finalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-//                             </div>
-
-//                             {discountAmount > 0 && (
-//                               <div className="text-xs text-green-700">
-//                                 You saved ₹{Number(discountAmount).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-//                               </div>
-//                             )}
-
-//                             {booking.coupon?.code && (
-//                               <div className="text-xs text-gray-600 mt-1">
-//                                 Coupon: <span className="font-medium">{booking.coupon.code}</span>
-//                               </div>
-//                             )}
-//                           </div>
-//                         );
-//                       })()}
+//                       {/* <span className="text-sm font-bold text-indigo-600">
+//                         ₹{finalAmount.toLocaleString('en-IN')}
+//                       </span> */}
 //                     </div>
-
 //                   </div>
 
 //                 </div>
@@ -295,7 +296,6 @@
 //     </div>
 //   );
 // }
-
 
 'use client';
 import { useEffect, useState } from 'react';
@@ -401,18 +401,18 @@ export default function MyBookingsPage() {
               })();
 
             // Determine amounts
-            // server may provide: subtotal, totalPrice (final), coupon.discountAmount
+            // Amounts coming DIRECTLY from server
+            const actualAmount = Number(booking.subtotal ?? booking.totalPrice ?? 0);
             const finalAmount = Number(booking.totalPrice ?? 0);
-            const couponDiscount = Number(booking.coupon?.discountAmount ?? booking.coupon?.discountAmount === 0 ? booking.coupon.discountAmount : 0);
-            const subtotalFromServer = booking.subtotal ?? null;
 
-            // compute original amount (best-effort)
-            const originalAmount = subtotalFromServer !== null
-              ? Number(subtotalFromServer)
-              : (couponDiscount > 0 ? (finalAmount + couponDiscount) : finalAmount);
+            const roomDiscountAmount = Number(booking.roomDiscountAmount ?? 0);
+            const couponDiscountAmount = Number(booking.coupon?.discountAmount ?? 0);
 
-            const savedAmount = originalAmount - finalAmount;
+            const savedAmount = roomDiscountAmount + couponDiscountAmount;
             const couponCode = booking.coupon?.code || null;
+
+            const hasDiscount = savedAmount > 0;
+
 
             return (
               <div
@@ -492,9 +492,9 @@ export default function MyBookingsPage() {
                     {/* Price summary on right */}
                     <div className="flex-shrink-0 text-right w-36">
                       {/* Original amount (strike-through) */}
-                      {originalAmount > finalAmount && (
+                      {hasDiscount && (
                         <div className="text-sm text-gray-400 line-through">
-                          ₹{Number(originalAmount).toLocaleString('en-IN')}
+                          ₹{actualAmount.toLocaleString('en-IN')}
                         </div>
                       )}
 
@@ -506,7 +506,7 @@ export default function MyBookingsPage() {
                       {/* You saved */}
                       {savedAmount > 0 && (
                         <div className="text-sm text-green-600 font-medium mt-1">
-                          You saved ₹{Number(savedAmount).toLocaleString('en-IN')}
+                          You saved ₹{savedAmount.toLocaleString('en-IN')}
                         </div>
                       )}
 

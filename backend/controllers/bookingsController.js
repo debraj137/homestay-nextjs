@@ -315,6 +315,9 @@ exports.createBooking = async (req, res) => {
       endAt,
       numberOfAdult,
       numberOfChild,
+      // 👇 ADD THESE (CRITICAL)
+      subtotal: actualPrice,               // actual/original price
+      roomDiscountAmount: coupon ? 0 : roomDiscountSaving,
       totalPrice: finalPrice, // final price after coupon (server-side)
       mobileNumber,
       status,
