@@ -28,3 +28,23 @@ body {
 .nav-link {
   @apply text-gray-700 hover:text-red-500 transition-colors;
 }
+
+/* Force react-date-range calendar to be scrollable on mobile */
+/* .rdrCalendarWrapper {
+  max-height: 27vh;
+  overflow-y: auto;
+} */
+@media (max-height: 800px) {
+  .rdrCalendarWrapper {
+    max-height: auto;
+    overflow-y: auto;
+  }
+}
+
+@media (min-height: 900px) {
+  .rdrCalendarWrapper {
+    max-height: 27vh;
+    overflow-y: auto;
+  }
+}
+
