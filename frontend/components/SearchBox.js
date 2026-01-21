@@ -276,9 +276,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Plus, Minus, Zap, Moon } from "lucide-react";
 import { format, addDays } from "date-fns";
-import { DateRange } from "react-date-range";
-import "react-date-range/dist/styles.css";
-import "react-date-range/dist/theme/default.css";
+// import { DateRange } from "react-date-range";
+// import "react-date-range/dist/styles.css";
+// import "react-date-range/dist/theme/default.css";
+import dynamic from "next/dynamic";
+
+const DateRange = dynamic(
+  () => import("react-date-range").then((m) => m.DateRange),
+  { ssr: false }
+);
 
 export default function SearchBox() {
   const router = useRouter();
@@ -325,7 +331,7 @@ export default function SearchBox() {
     <div className="w-full flex justify-center mt-10 px-3 md:px-5">
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-lg rounded-3xl w-full max-w-[1340px] px-4 md:px-8 py-6 transition-all duration-300"
+        className="min-h-[220px] bg-white shadow-lg rounded-3xl w-full max-w-[1340px] px-4 md:px-8 py-6 transition-all duration-300"
       >
         {/* Toggle Buttons */}
         <div className="flex justify-center mb-5 flex-wrap gap-3">
