@@ -265,7 +265,7 @@ export default function HomestaysPage() {
                   {/* Details */}
                   <div className="p-4 flex flex-col justify-between flex-1">
                     <div>
-                      <h2 className="text-lg font-bold">
+                      <h2 className="text-lg font-bold text-gray-900">
                         <Link
                           href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
                           className="hover:underline hover:text-red-600"
