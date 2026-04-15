@@ -1,10 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
-const twilio = require('twilio');
 const jwt = require('jsonwebtoken');
-// Twilio setup
-const twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 
 // Nodemailer setup (Gmail)
 const transporter = nodemailer.createTransport({
@@ -20,7 +17,7 @@ function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// REGISTER + SEND OTPs
+// REGISTER + SEND EMAIL OTP
 exports.register = async (req, res) => {
   try {
     const { name, email, password, mobileNumber } = req.body;
@@ -31,7 +28,6 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const emailOtp = generateOtp();
-    const mobileOtp = generateOtp();
     const expiry = new Date(Date.now() + 10 * 60 * 1000);
     const role = req.body.role || 'user';
     const user = new User({
@@ -40,10 +36,10 @@ exports.register = async (req, res) => {
       password: hashedPassword,
       mobileNumber,
       role,
+      emailVerified: false,
+      mobileVerified: true,
       emailOtp,
       emailOtpExpiry: expiry,
-      mobileOtp,
-      mobileOtpExpiry: expiry,
     });
     await user.save();
 
@@ -55,14 +51,7 @@ exports.register = async (req, res) => {
       text: `Your OTP is ${emailOtp}. Valid for 10 minutes.`,
     });
 
-    // Send SMS OTP
-    await twilioClient.messages.create({
-      body: `Your OTP is ${mobileOtp}. Valid for 10 minutes.`,
-      from: process.env.TWILIO_PHONE,
-      to: `+91${mobileNumber}`,
-    });
-
-    res.json({ message: 'User registered. OTPs sent to email and mobile.' });
+    res.json({ message: 'User registered. OTP sent to email.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error registering user' });
@@ -105,7 +94,7 @@ exports.register = async (req, res) => {
 
 exports.verifyOtp = async (req, res) => {
   try {
-    const { email, emailOtp, mobileOtp } = req.body;
+    const { email, emailOtp } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -113,16 +102,10 @@ exports.verifyOtp = async (req, res) => {
     if (!user.emailOtp || user.emailOtp !== emailOtp || user.emailOtpExpiry < now) {
       return res.status(400).json({ message: 'Invalid or expired email OTP' });
     }
-    if (!user.mobileOtp || user.mobileOtp !== mobileOtp || user.mobileOtpExpiry < now) {
-      return res.status(400).json({ message: 'Invalid or expired mobile OTP' });
-    }
 
     user.emailVerified = true;
-    user.mobileVerified = true;
     user.emailOtp = null;
-    user.mobileOtp = null;
     user.emailOtpExpiry = null;
-    user.mobileOtpExpiry = null;
     await user.save();
 
     // 🔹 generate JWT
@@ -139,7 +122,10 @@ exports.verifyOtp = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        mobileNumber: user.mobileNumber,
         role: user.role,
+        emailVerified: user.emailVerified,
+        mobileVerified: user.mobileVerified,
       }
     });
   } catch (err) {
@@ -156,13 +142,10 @@ exports.resendOtp = async (req, res) => {
     if (!user) return res.status(400).json({ message: 'User not found' });
 
     const emailOtp = generateOtp();
-    const mobileOtp = generateOtp();
     const expiry = new Date(Date.now() + 10 * 60 * 1000);
 
     user.emailOtp = emailOtp;
     user.emailOtpExpiry = expiry;
-    user.mobileOtp = mobileOtp;
-    user.mobileOtpExpiry = expiry;
     await user.save();
 
     await transporter.sendMail({
@@ -172,13 +155,7 @@ exports.resendOtp = async (req, res) => {
       text: `Your new OTP is ${emailOtp}. Valid for 10 minutes.`,
     });
 
-    await twilioClient.messages.create({
-      body: `Your new OTP is ${mobileOtp}. Valid for 10 minutes.`,
-      from: process.env.TWILIO_PHONE,
-      to: `+91${user.mobileNumber}`,
-    });
-
-    res.json({ message: 'New OTP sent to email and mobile.' });
+    res.json({ message: 'New OTP sent to email.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error resending OTP' });
@@ -193,9 +170,9 @@ exports.login = async (req, res) => {
     console.log("Login attempt for user:", user);
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
-    // Check if verified
-    if (!user.emailVerified || !user.mobileVerified) {
-      return res.status(403).json({ message: 'Please verify email and mobile before login' });
+    // Allow login without mobile verification, but keep email verification mandatory.
+    if (!user.emailVerified) {
+      return res.status(403).json({ message: 'Please verify your email before login' });
     }
 
     // Compare password
@@ -214,7 +191,15 @@ exports.login = async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      user: { id: user._id, name: user.name, email: user.email, mobileNumber: user.mobileNumber, role: user.role },
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        mobileNumber: user.mobileNumber,
+        role: user.role,
+        emailVerified: user.emailVerified,
+        mobileVerified: user.mobileVerified,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -367,7 +352,7 @@ exports.savePassword = async (req, res) => {
   }
 };
 
-// SEND MOBILE OTP
+// SAVE MOBILE NUMBER
 exports.sendMobileOtp = async (req, res) => {
   try {
     const { email, mobileNumber } = req.body;
@@ -375,25 +360,16 @@ exports.sendMobileOtp = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const mobileOtp = generateOtp();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000);
-
     user.mobileNumber = mobileNumber;
-    user.mobileOtp = mobileOtp;
-    user.mobileOtpExpiry = expiry;
+    user.mobileVerified = true;
+    user.mobileOtp = null;
+    user.mobileOtpExpiry = null;
     await user.save();
 
-    // Send via Twilio
-    await twilioClient.messages.create({
-      body: `Your OTP is ${mobileOtp}. Valid for 10 minutes.`,
-      from: process.env.TWILIO_PHONE,
-      to: `+91${mobileNumber}`,
-    });
-
-    res.json({ message: "OTP sent to mobile successfully" });
+    res.json({ message: "Mobile number saved successfully" });
   } catch (err) {
     console.error("Error sending mobile OTP:", err);
-    res.status(500).json({ message: "Error sending OTP" });
+    res.status(500).json({ message: "Error saving mobile number" });
   }
 };
 
@@ -401,14 +377,9 @@ exports.sendMobileOtp = async (req, res) => {
 // VERIFY MOBILE OTP
 exports.verifyMobileOtp = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { email } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
-
-    const now = new Date();
-    if (!user.mobileOtp || user.mobileOtp !== otp || user.mobileOtpExpiry < now) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
-    }
 
     user.mobileVerified = true;
     user.mobileOtp = null;
@@ -423,7 +394,7 @@ exports.verifyMobileOtp = async (req, res) => {
     );
 
     res.json({
-      message: "Mobile verified successfully",
+      message: "Mobile number saved successfully",
       token,
       user: {
         id: user._id,
@@ -442,27 +413,22 @@ exports.verifyMobileOtp = async (req, res) => {
 // RESEND MOBILE OTP
 exports.resendMobileOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, mobileNumber } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const mobileOtp = generateOtp();
-    const expiry = new Date(Date.now() + 10 * 60 * 1000);
-
-    user.mobileOtp = mobileOtp;
-    user.mobileOtpExpiry = expiry;
+    if (mobileNumber) {
+      user.mobileNumber = mobileNumber;
+    }
+    user.mobileVerified = true;
+    user.mobileOtp = null;
+    user.mobileOtpExpiry = null;
     await user.save();
 
-    await twilioClient.messages.create({
-      body: `Your new OTP is ${mobileOtp}. Valid for 10 minutes.`,
-      from: process.env.TWILIO_PHONE,
-      to: `+91${user.mobileNumber}`,
-    });
-
-    res.json({ message: "New OTP sent to mobile" });
+    res.json({ message: "Mobile number saved successfully" });
   } catch (err) {
     console.error("Error resending OTP:", err);
-    res.status(500).json({ message: "Error resending OTP" });
+    res.status(500).json({ message: "Error saving mobile number" });
   }
 };
 

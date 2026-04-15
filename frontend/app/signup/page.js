@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 export default function SignupPage() {
   const [step, setStep] = useState('register');
   const [form, setForm] = useState({ name: '', email: '', mobileNumber: '', password: '' });
-  const [otp, setOtp] = useState({ emailOtp: '', mobileOtp: '' });
+  const [otp, setOtp] = useState({ emailOtp: '' });
   const [loading, setLoading] = useState(false);
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
@@ -126,7 +126,7 @@ export default function SignupPage() {
               <h2 className="text-2xl font-bold text-center mb-6">Verify Your Account</h2>
               <form onSubmit={handleVerify} className="space-y-4">
                 <input placeholder="Email OTP" value={otp.emailOtp} onChange={(e) => setOtp({ ...otp, emailOtp: e.target.value })} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" />
-                <input placeholder="Mobile OTP" value={otp.mobileOtp} onChange={(e) => setOtp({ ...otp, mobileOtp: e.target.value })} required className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" />
+                <p className="text-sm text-gray-500">Email verification is required.</p>
                 <button type="submit" disabled={loading} className={`w-full py-2 rounded-lg font-semibold ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 text-white'}`}>
                   {loading ? 'Verifying...' : 'Verify'}
                 </button>

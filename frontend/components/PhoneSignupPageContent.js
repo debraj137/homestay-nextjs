@@ -8,7 +8,7 @@ export default function PhoneSignupPageContent() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const email = searchParams.get('email'); // ✅ safe here inside Suspense
+  const email = searchParams.get('email');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -26,11 +26,11 @@ export default function PhoneSignupPageContent() {
         return;
       }
 
-      toast.success('OTP sent to your mobile 📱');
-      router.push(`/signup/verify-phone?email=${encodeURIComponent(email)}`);
+      toast.success('Mobile number saved successfully');
+      router.push('/login');
     } catch (err) {
       console.error(err);
-      toast.error(err.message || 'Failed to send OTP');
+      toast.error(err.message || 'Failed to save mobile number');
     } finally {
       setLoading(false);
     }
@@ -44,10 +44,10 @@ export default function PhoneSignupPageContent() {
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-md bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-semibold text-center mb-2">
-            Add a mobile number for secure sign-in
+            Add your mobile number
           </h1>
           <p className="text-gray-600 text-center mb-6 text-sm">
-            We`&apos;ll send you a secure code to confirm it`&apos;s you.
+            Save your number to complete signup. No OTP is required.
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -68,10 +68,11 @@ export default function PhoneSignupPageContent() {
             <button
               type="submit"
               disabled={loading}
-              className={`cursor-pointer w-full font-medium py-2 rounded-md text-sm transition 
-              ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-800 text-white'}`}
+              className={`cursor-pointer w-full font-medium py-2 rounded-md text-sm transition ${
+                loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-800 text-white'
+              }`}
             >
-              {loading ? 'Sending...' : 'Send code'}
+              {loading ? 'Saving...' : 'Continue'}
             </button>
           </form>
         </div>
