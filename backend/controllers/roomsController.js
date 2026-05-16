@@ -72,18 +72,22 @@ exports.searchRooms = async (req, res) => {
     const numAdults = parseInt(adults) || 1;
     const numChildren = parseInt(children) || 0;
 
-    let rooms = await Room.find({
+    const rooms = await Room.find({
       "location.city": city,
       isApproved: true,
       isAvailable: true,
       maximumAllowedAdult: { $gte: numAdults },
       maximumAllowedChild: { $gte: numChildren },
-    }).lean();
+    })
+      .select(
+        "title location price discount images amenities maximumAllowedAdult maximumAllowedChild isApproved isAvailable category createdAt"
+      )
+      .lean();
 
     let availableRooms = rooms;
 
     // ✅ Date overlap check
-    if (checkInDate && checkOutDate) {
+    if (rooms.length > 0 && checkInDate && checkOutDate) {
       const checkIn = new Date(checkInDate);
       const checkOut = new Date(checkOutDate);
 
@@ -98,23 +102,24 @@ exports.searchRooms = async (req, res) => {
         checkOutDate: { $gt: checkIn },
       }).distinct("roomId");
 
-      availableRooms = rooms.filter(
-        (r) => !bookedRoomIds.map((id) => id.toString()).includes(r._id.toString())
-      );
+      const bookedRoomIdSet = new Set(bookedRoomIds.map((id) => id.toString()));
+      availableRooms = rooms.filter((room) => !bookedRoomIdSet.has(room._id.toString()));
     }
 
     // ✅ Ratings
     const roomIds = availableRooms.map((r) => r._id);
-    const ratings = await Review.aggregate([
-      { $match: { roomId: { $in: roomIds } } },
-      {
-        $group: {
-          _id: "$roomId",
-          averageRating: { $avg: "$rating" },
-          totalReviews: { $sum: 1 },
-        },
-      },
-    ]);
+    const ratings = roomIds.length
+      ? await Review.aggregate([
+          { $match: { roomId: { $in: roomIds } } },
+          {
+            $group: {
+              _id: "$roomId",
+              averageRating: { $avg: "$rating" },
+              totalReviews: { $sum: 1 },
+            },
+          },
+        ])
+      : [];
 
     const ratingMap = {};
     ratings.forEach((r) => {
@@ -132,7 +137,7 @@ exports.searchRooms = async (req, res) => {
 
       return {
         ...room,
-        averageRating: parseFloat(ratingData.averageRating.toFixed(1)),
+        averageRating: Number((ratingData.averageRating || 0).toFixed(1)),
         totalReviews: ratingData.totalReviews,
         discountedPrice,
       };

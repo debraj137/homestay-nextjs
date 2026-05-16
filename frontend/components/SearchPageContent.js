@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import slugify from "slugify";
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -6,6 +7,8 @@ import Filters from '@/components/Filters';
 import BookingModal from '@/components/BookingModal';
 import toast from 'react-hot-toast';
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000/api';
 
 // ✅ Child component for each room card
 function RoomCard({ room, city, checkInDate, checkOutDate, searchParams, onBookNow }) {
@@ -94,10 +97,12 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams, onBookN
       {/* 🖼️ Image Carousel */}
       <div className="relative w-full md:w-1/3 h-[268px] overflow-hidden rounded-t-xl md:rounded-l-xl md:rounded-tr-none">
         {room.images?.length > 0 ? (
-          <img
+          <Image
             src={room.images[currentImage]}
             alt={room.title}
-            className="w-full h-full object-cover transition-transform duration-500"
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover transition-transform duration-500"
           />
         ) : (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
@@ -251,7 +256,11 @@ function RoomCard({ room, city, checkInDate, checkOutDate, searchParams, onBookN
 }
 
 // ✅ Main SearchPageContent Component
-export default function SearchPageContent() {
+export default function SearchPageContent({
+  initialRooms = [],
+  initialError = null,
+  initialSearch = {},
+}) {
   const searchParams = useSearchParams();
   const city = searchParams.get('city');
   const checkInDate = searchParams.get('checkInDate');
@@ -259,7 +268,7 @@ export default function SearchPageContent() {
   const adults = searchParams.get('adults');
   const children = searchParams.get('children');
 
-  const [rooms, setRooms] = useState([]);
+  const [rooms, setRooms] = useState(initialRooms);
   const [loading, setLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [propertyQuery, setPropertyQuery] = useState("");
@@ -273,6 +282,21 @@ export default function SearchPageContent() {
         return;
       }
 
+      const matchesInitialSearch =
+        city === initialSearch.city &&
+        checkInDate === initialSearch.checkInDate &&
+        checkOutDate === initialSearch.checkOutDate &&
+        adults === initialSearch.adults &&
+        children === initialSearch.children;
+
+      if (matchesInitialSearch) {
+        setRooms(initialRooms);
+        if (initialError) {
+          toast.error(initialError);
+        }
+        return;
+      }
+
       try {
         setLoading(true);
         const query = new URLSearchParams({ city });
@@ -281,7 +305,7 @@ export default function SearchPageContent() {
         if (adults) query.set('adults', adults);
         if (children) query.set('children', children);
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/search?${query.toString()}`);
+        const res = await fetch(`${API_BASE}/rooms/search?${query.toString()}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed to fetch rooms');
         setRooms(data);
@@ -292,13 +316,13 @@ export default function SearchPageContent() {
       }
     }
     fetchInitial();
-  }, [city, checkInDate, checkOutDate, adults, children]);
+  }, [city, checkInDate, checkOutDate, adults, children, initialRooms, initialError, initialSearch]);
 
   // ✅ Filter apply
   async function handleFilterApply(filters) {
     try {
       setLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/filter`, {
+      const res = await fetch(`${API_BASE}/rooms/filter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -307,7 +331,6 @@ export default function SearchPageContent() {
           minRating: filters.minRating ?? null,
           nearbyArea: filters.nearbyArea ?? null, // ✅ NEW
           city, // IMPORTANT
-          city,
           checkInDate,
           checkOutDate,
         }),

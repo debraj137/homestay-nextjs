@@ -26,4 +26,12 @@ const roomSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+roomSchema.index({
+  "location.city": 1,
+  isApproved: 1,
+  isAvailable: 1,
+  maximumAllowedAdult: 1,
+  maximumAllowedChild: 1,
+});
+
 module.exports = mongoose.model('Room', roomSchema);
