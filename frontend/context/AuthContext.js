@@ -55,8 +55,14 @@ export function AuthProvider({ children }) {
     const storedToken = localStorage.getItem('token');
 
     if (storedUser && storedToken) {
+      try {
       setUser(JSON.parse(storedUser));
       setToken(storedToken); // ✅ load token too
+      } catch {
+        // Do not let stale browser storage crash the entire app.
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
     }
     setLoading(false);
   }, []);
