@@ -12,6 +12,12 @@ const adminRouter = require('./routes/admin');
 const reviewRouter = require('./routes/review');
 const couponsRouter = require('./routes/coupons');
 const app = express();
+console.log("SERVER FILE LOADED");
+
+app.use((req, res, next) => {
+  console.log("BACKEND REQUEST RECEIVED:", req.method, req.originalUrl);
+  next();
+});
 app.use(cors());
 app.use(express.json());
 
@@ -34,7 +40,7 @@ app.use('/api/coupons', couponsRouter);
 app.get('/', (req, res) => res.send('Homestay API running'));
 
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server runningg on port ${PORT}`));
 
 
 

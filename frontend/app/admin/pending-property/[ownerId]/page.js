@@ -11,7 +11,9 @@ export default function PendingRoomsPage() {
   useEffect(() => {
     async function fetchRooms() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/pending-rooms/${ownerId}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/pending-rooms/${ownerId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
         const data = await res.json();
         setRooms(data);
       } catch (err) {
@@ -25,7 +27,10 @@ export default function PendingRoomsPage() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/room/${roomId}/approval`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
         body: JSON.stringify({ action }),
       });
       if (!res.ok) throw new Error('Failed to update');

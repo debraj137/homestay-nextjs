@@ -1,487 +1,138 @@
-// 'use client';
-// import slugify from "slugify";
-// import { useEffect, useState } from 'react';
-// import toast from 'react-hot-toast';
-// import BookingModal from '@/components/BookingModal';
-// import Link from "next/link";
-
-// export default function PremiumHomestays() {
-//   const categories = [
-//     {
-//       key: 'Gold',
-//       title: 'Gold Rooms',
-//       icon: '🌟',
-//       color: 'text-yellow-700',
-//       // color: 'text-green-600',
-//       saveColor: 'text-green-600',
-//       underline: 'border-yellow-500',
-//       // badge: 'bg-yellow-100 text-yellow-800',
-//       badge: 'bg-gray-200 text-gray-700',
-//       // priceColor: 'text-yellow-700',
-//       priceColor: 'text-red-600',
-//       // bookBtn: 'bg-yellow-500 hover:bg-yellow-600',
-//       bookBtn: 'bg-gray-700 hover:bg-gray-800',
-//       // outlineBtn: 'border-yellow-500 text-yellow-600 hover:bg-yellow-50',
-//       outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
-//       // tagBg: 'bg-yellow-50 text-yellow-700',
-//       tagBg: 'bg-gray-100 text-gray-700',
-//       discountBadge: 'bg-yellow-500 text-white',
-//     },
-//     {
-//       key: 'Silver',
-//       title: 'Silver Rooms',
-//       icon: '🥈',
-//       color: 'text-gray-700',
-//       // color: 'text-green-600',
-//       saveColor: 'text-green-600',
-//       underline: 'border-gray-400',
-//       badge: 'bg-gray-200 text-gray-700',
-//       priceColor: 'text-red-600',
-//       bookBtn: 'bg-gray-700 hover:bg-gray-800',
-//       outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
-//       tagBg: 'bg-gray-100 text-gray-700',
-//       discountBadge: 'bg-gray-600 text-white',
-//     },
-//     {
-//       key: 'Diamond',
-//       title: 'Diamond Rooms',
-//       icon: '💎',
-//       color: 'text-purple-700',
-//       // color: 'text-green-600',
-//       saveColor: 'text-green-600',
-//       underline: 'border-purple-600',
-//       // badge: 'bg-purple-100 text-purple-700',
-//       badge: 'bg-gray-200 text-gray-700',
-//       // priceColor: 'text-purple-700',
-//       priceColor: 'text-red-600',
-//       // bookBtn: 'bg-purple-600 hover:bg-purple-700',
-//       bookBtn: 'bg-gray-700 hover:bg-gray-800',
-//       // outlineBtn: 'border-purple-600 text-purple-700 hover:bg-purple-50',
-//       outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
-//       // tagBg: 'bg-purple-50 text-purple-700',
-//       tagBg: 'bg-gray-100 text-gray-700',
-//       discountBadge: 'bg-purple-600 text-white',
-//     },
-//   ];
-
-//   const [roomsByCategory, setRoomsByCategory] = useState({});
-//   const [selectedRoom, setSelectedRoom] = useState(null);
-
-//   // ✅ Fetch category-wise rooms safely
-//   useEffect(() => {
-//     async function fetchRooms() {
-//       try {
-//         const results = {};
-//         for (const cat of categories) {
-//           const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/category/${cat.key}`);
-//           const data = await res.json();
-//           if (!res.ok) throw new Error(data.message);
-
-//           results[cat.key] = data.map((room) => {
-//             const price = Number(room.price) || 0;
-//             const discount = Number(room.discount) || 0;
-//             const discountedPrice =
-//               discount > 0 ? Math.round(price - (price * discount) / 100) : price;
-//             const savedAmount = discount > 0 ? price - discountedPrice : 0;
-//             return { ...room, discountedPrice, savedAmount, discountPercentage: discount };
-//           });
-//         }
-//         setRoomsByCategory(results);
-//       } catch (err) {
-//         toast.error(err.message || 'Failed to load premium rooms');
-//       }
-//     }
-//     fetchRooms();
-//   }, []);
-
-//   return (
-//     <section className="py-16 bg-white">
-//       <div className="max-w-7xl mx-auto px-6">
-//         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-10 text-center">
-//           Our Premium Homestay
-//         </h2>
-
-//         {categories.map((cat) => (
-//           <div key={cat.key} className="mb-12">
-//             <h3
-//               className={`text-xl font-semibold mb-6 flex items-center space-x-2 ${cat.color}`}
-//             >
-//               <span>{cat.icon}</span>
-//               <span>{cat.title}</span>
-//             </h3>
-//             <div className={`w-24 border-b-4 ${cat.underline} mb-6`}></div>
-
-//             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-//               {roomsByCategory[cat.key]?.length > 0 ? (
-//                 roomsByCategory[cat.key].map((room) => {
-//                   const hasDiscount = room.discountPercentage > 0;
-//                   const price = Number(room.price) || 0;
-//                   const discountedPrice = Number(room.discountedPrice) || price;
-//                   const savedAmount = Number(room.savedAmount) || 0;
-
-//                   return (
-//                     <div
-//                       key={room._id}
-//                       className="bg-white rounded-lg shadow-md hover:shadow-xl transition overflow-hidden border border-gray-200"
-//                     >
-//                       {/* Image + Themed Discount Badge */}
-//                       <div className="relative">
-//                         <Link
-//                           href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
-//                           className="block group"
-//                         >
-//                           <img
-//                             src={room.images?.[0] || '/default-room.jpg'}
-//                             alt={room.title}
-//                             className="w-full h-48 object-cover"
-//                           />
-//                           {hasDiscount && (
-//                             <div
-//                               className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-md shadow-md"
-//                             >
-//                               {room.discountPercentage}% OFF
-//                             </div>
-//                           )}
-//                         </Link>
-//                       </div>
-
-//                       {/* Room Info */}
-//                       <div className="p-4 flex flex-col space-y-2">
-//                         <div className="flex justify-between items-center">
-//                           <h4 className="font-semibold text-lg text-gray-900 truncate leading-snug">
-//                             <Link
-//                               href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
-//                               className="hover:text-red-500 transition-colors duration-200"
-//                             >
-//                               {room.title}
-//                             </Link>
-//                           </h4>
-//                           <span
-//                             className={`px-2 py-1 text-xs font-semibold rounded-full ${cat.badge}`}
-//                           >
-//                             {cat.key.toUpperCase()}
-//                           </span>
-//                         </div>
-//                         <p className="text-gray-500 text-sm">
-//                           {room.location?.city}, {room.location?.state}
-//                         </p>
-
-//                         {/* 💰 Themed Inline Price Row */}
-//                         {hasDiscount ? (
-//                           <div className="mt-2 flex flex-wrap items-baseline gap-2">
-//                             <p className="text-gray-400 line-through text-sm">
-//                               ₹{price.toLocaleString('en-IN')}
-//                             </p>
-//                             <p className={`font-bold text-lg ${cat.priceColor}`}>
-//                               ₹{discountedPrice.toLocaleString('en-IN')}
-//                               <span className="text-sm text-red-600"> / night</span>
-//                             </p>
-//                             <p className={`text-sm font-semibold ${cat.saveColor}`}>
-//                               Save ₹{savedAmount.toLocaleString('en-IN')}
-//                             </p>
-//                           </div>
-//                         ) : (
-//                           <p className={`font-bold ${cat.priceColor}`}>
-//                             ₹{price.toLocaleString('en-IN')}
-//                             <span className="text-red-600 text-sm font-normal">
-//                               {' '}
-//                               / night
-//                             </span>
-//                           </p>
-//                         )}
-
-//                         {/* Amenities */}
-//                         <div className="flex flex-wrap gap-2 text-xs mt-2">
-//                           {room.amenities?.slice(0, 5).map((tag, idx) => (
-//                             <span
-//                               key={idx}
-//                               className={`px-2 py-1 rounded-full ${cat.tagBg}`}
-//                             >
-//                               {tag}
-//                             </span>
-//                           ))}
-//                         </div>
-
-//                         {/* Actions */}
-//                         <div className="flex justify-between mt-3 space-x-2">
-//                           <button
-//                             onClick={() => setSelectedRoom(room)}
-//                             className={`flex-1 px-4 py-2 text-white text-sm font-semibold rounded-lg ${cat.bookBtn} cursor-pointer`}
-//                           >
-//                             Book Now
-//                           </button>
-//                           <a
-//                             href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
-//                             className={`flex-1 px-4 py-2 border text-sm font-semibold rounded-lg text-center ${cat.outlineBtn}`}
-//                           >
-//                             View Details
-//                           </a>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   );
-//                 })
-//               ) : (
-//                 <p className="text-gray-500">No {cat.title} available.</p>
-//               )}
-//             </div>
-//           </div>
-//         ))}
-
-//         {/* ✅ Booking Modal */}
-//         {selectedRoom && (
-//           <BookingModal
-//             room={selectedRoom}
-//             onClose={() => setSelectedRoom(null)}
-//           />
-//         )}
-//       </div>
-//     </section>
-//   );
-// }
 'use client';
-import slugify from "slugify";
+
+import Image from 'next/image';
+import Link from 'next/link';
+import slugify from 'slugify';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { ArrowRight, Crown, Gem, MapPin, Medal, Star } from 'lucide-react';
 import BookingModal from '@/components/BookingModal';
-import Link from "next/link";
-import Image from "next/image";
+
+const categories = [
+  { key: 'Gold', title: 'Gold stays', description: 'Comfortable, well-located stays for an easy arrival.', Icon: Medal, tone: 'bg-[#fbefd9] text-[#8a5215]', accent: 'text-[#8a5215]' },
+  { key: 'Silver', title: 'Silver stays', description: 'Straightforward comfort with the essentials in place.', Icon: Crown, tone: 'bg-[#f0ebe5] text-[#64564b]', accent: 'text-[#64564b]' },
+  { key: 'Diamond', title: 'Diamond stays', description: 'More room, more detail and a little more occasion.', Icon: Gem, tone: 'bg-[#f6e8e8] text-[#8d3b3c]', accent: 'text-[#8d3b3c]' },
+];
+
+function RoomCard({ room, category, onBookNow }) {
+  const price = Number(room.price) || 0;
+  const discount = Number(room.discount) || 0;
+  const discountedPrice = discount > 0 ? Math.round(price - (price * discount) / 100) : price;
+  const roomUrl = `/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`;
+
+  return (
+    <article className="group overflow-hidden rounded-[1.35rem] border border-[#e8dbcd] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_42px_rgba(63,36,21,.14)]">
+      <Link href={roomUrl} className="relative block h-56 overflow-hidden bg-[#ead9c4]">
+        {room.images?.[0] ? (
+          <Image src={room.images[0]} alt={room.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover transition duration-500 group-hover:scale-105" />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,#ead6bc,#b97a53)] text-sm font-semibold text-[#5d3725]">Photos coming soon</div>
+        )}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/45 to-transparent" />
+        {discount > 0 && <span className="absolute left-4 top-4 rounded-full bg-[#a54528] px-3 py-1 text-xs font-bold text-white">Save {discount}%</span>}
+        <span className={`absolute bottom-4 left-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold ${category.tone}`}>
+          <category.Icon className="h-3.5 w-3.5" aria-hidden="true" /> {category.key}
+        </span>
+      </Link>
+
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="truncate text-lg font-bold text-[#30231d]"><Link href={roomUrl} className="transition hover:text-[#a54528]">{room.title}</Link></h3>
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-[#796b62]"><MapPin className="h-3.5 w-3.5 text-[#a54528]" aria-hidden="true" />{room.location?.city || 'India'}{room.location?.state ? `, ${room.location.state}` : ''}</p>
+          </div>
+          {Number(room.averageRating) > 0 && <span className="flex shrink-0 items-center gap-1 rounded-full bg-[#fff3dc] px-2 py-1 text-xs font-bold text-[#7c531f]"><Star className="h-3 w-3 fill-current" />{Number(room.averageRating).toFixed(1)}</span>}
+        </div>
+
+        {room.amenities?.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {room.amenities.slice(0, 3).map((amenity) => <span key={amenity} className="rounded-full bg-[#f8f1e9] px-2.5 py-1 text-xs font-medium text-[#67574d]">{amenity}</span>)}
+            {room.amenities.length > 3 && <span className="px-1 py-1 text-xs font-semibold text-[#86766c]">+{room.amenities.length - 3} more</span>}
+          </div>
+        )}
+
+        <div className="mt-6 flex items-end justify-between gap-3 border-t border-[#eee2d5] pt-4">
+          <div>
+            {discount > 0 && <p className="text-xs text-[#918076] line-through">₹{price.toLocaleString('en-IN')}</p>}
+            <p className={`text-xl font-extrabold ${category.accent}`}>₹{discountedPrice.toLocaleString('en-IN')}<span className="ml-1 text-xs font-semibold text-[#796b62]">/ night</span></p>
+          </div>
+          <button type="button" onClick={() => onBookNow(room)} className="awadh-button px-4 py-2.5 text-sm">Book now</button>
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export default function PremiumHomestays() {
-  const categories = [
-    {
-      key: 'Gold',
-      title: 'Gold Rooms',
-      icon: '🌟',
-      color: 'text-yellow-700',
-      // color: 'text-green-600',
-      saveColor: 'text-green-600',
-      underline: 'border-yellow-500',
-      // badge: 'bg-yellow-100 text-yellow-800',
-      badge: 'bg-gray-200 text-gray-700',
-      // priceColor: 'text-yellow-700',
-      priceColor: 'text-red-600',
-      // bookBtn: 'bg-yellow-500 hover:bg-yellow-600',
-      bookBtn: 'bg-gray-700 hover:bg-gray-800',
-      // outlineBtn: 'border-yellow-500 text-yellow-600 hover:bg-yellow-50',
-      outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
-      // tagBg: 'bg-yellow-50 text-yellow-700',
-      tagBg: 'bg-gray-100 text-gray-700',
-      discountBadge: 'bg-yellow-500 text-white',
-    },
-    {
-      key: 'Silver',
-      title: 'Silver Rooms',
-      icon: '🥈',
-      color: 'text-gray-700',
-      // color: 'text-green-600',
-      saveColor: 'text-green-600',
-      underline: 'border-gray-400',
-      badge: 'bg-gray-200 text-gray-700',
-      priceColor: 'text-red-600',
-      bookBtn: 'bg-gray-700 hover:bg-gray-800',
-      outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
-      tagBg: 'bg-gray-100 text-gray-700',
-      discountBadge: 'bg-gray-600 text-white',
-    },
-    {
-      key: 'Diamond',
-      title: 'Diamond Rooms',
-      icon: '💎',
-      color: 'text-purple-700',
-      // color: 'text-green-600',
-      saveColor: 'text-green-600',
-      underline: 'border-purple-600',
-      // badge: 'bg-purple-100 text-purple-700',
-      badge: 'bg-gray-200 text-gray-700',
-      // priceColor: 'text-purple-700',
-      priceColor: 'text-red-600',
-      // bookBtn: 'bg-purple-600 hover:bg-purple-700',
-      bookBtn: 'bg-gray-700 hover:bg-gray-800',
-      // outlineBtn: 'border-purple-600 text-purple-700 hover:bg-purple-50',
-      outlineBtn: 'border-gray-400 text-gray-700 hover:bg-gray-50',
-      // tagBg: 'bg-purple-50 text-purple-700',
-      tagBg: 'bg-gray-100 text-gray-700',
-      discountBadge: 'bg-purple-600 text-white',
-    },
-  ];
-
   const [roomsByCategory, setRoomsByCategory] = useState({});
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch category-wise rooms safely
   useEffect(() => {
     async function fetchRooms() {
       try {
-        const results = {};
-        for (const cat of categories) {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/category/${cat.key}`);
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message);
-
-          results[cat.key] = data.map((room) => {
-            const price = Number(room.price) || 0;
-            const discount = Number(room.discount) || 0;
-            const discountedPrice =
-              discount > 0 ? Math.round(price - (price * discount) / 100) : price;
-            const savedAmount = discount > 0 ? price - discountedPrice : 0;
-            return { ...room, discountedPrice, savedAmount, discountPercentage: discount };
-          });
-        }
-        setRoomsByCategory(results);
-      } catch (err) {
-        toast.error(err.message || 'Failed to load premium rooms');
+        const responses = await Promise.all(categories.map(async (category) => {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/category/${category.key}`);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || `Could not load ${category.title}`);
+          return [category.key, data];
+        }));
+        setRoomsByCategory(Object.fromEntries(responses));
+      } catch (error) {
+        toast.error(error.message || 'Failed to load stays');
+      } finally {
+        setLoading(false);
       }
     }
+
     fetchRooms();
   }, []);
 
   return (
-    <section className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-10 text-center">
-          Our Premium Homestay
-        </h2>
-
-        {categories.map((cat) => (
-          <div key={cat.key} className="mb-12">
-            <h3
-              className={`text-xl font-semibold mb-6 flex items-center space-x-2 ${cat.color}`}
-            >
-              <span>{cat.icon}</span>
-              <span>{cat.title}</span>
-            </h3>
-            <div className={`w-24 border-b-4 ${cat.underline} mb-6`}></div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {roomsByCategory[cat.key]?.length > 0 ? (
-                roomsByCategory[cat.key].map((room) => {
-                  const hasDiscount = room.discountPercentage > 0;
-                  const price = Number(room.price) || 0;
-                  const discountedPrice = Number(room.discountedPrice) || price;
-                  const savedAmount = Number(room.savedAmount) || 0;
-
-                  return (
-                    <div
-                      key={room._id}
-                      className="bg-white rounded-lg shadow-md hover:shadow-xl transition overflow-hidden border border-gray-200"
-                    >
-                      {/* Image + Themed Discount Badge */}
-                      <div className="relative">
-                        <Link
-                          href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
-                          className="block group"
-                        >
-                          <Image
-                            src={room.images?.[0] || '/default-room.jpg'}
-                            alt={room.title}
-                            // fill
-                            width={400}
-                            height={192}
-                            sizes="(max-width: 768px) 100vw, 400px"
-                            className="w-full h-48 object-cover"
-                          />
-                          {hasDiscount && (
-                            <div
-                              className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-md shadow-md"
-                            >
-                              {room.discountPercentage}% OFF
-                            </div>
-                          )}
-                        </Link>
-                      </div>
-
-                      {/* Room Info */}
-                      <div className="p-4 flex flex-col space-y-2">
-                        <div className="flex justify-between items-center">
-                          <h4 className="font-semibold text-lg text-gray-900 truncate leading-snug">
-                            <Link
-                              href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
-                              className="hover:text-red-500 transition-colors duration-200"
-                            >
-                              {room.title}
-                            </Link>
-                          </h4>
-                          <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${cat.badge}`}
-                          >
-                            {cat.key.toUpperCase()}
-                          </span>
-                        </div>
-                        <p className="text-gray-500 text-sm">
-                          {room.location?.city}, {room.location?.state}
-                        </p>
-
-                        {/* 💰 Themed Inline Price Row */}
-                        {hasDiscount ? (
-                          <div className="mt-2 flex flex-wrap items-baseline gap-2">
-                            <p className="text-gray-400 line-through text-sm">
-                              ₹{price.toLocaleString('en-IN')}
-                            </p>
-                            <p className={`font-bold text-lg ${cat.priceColor}`}>
-                              ₹{discountedPrice.toLocaleString('en-IN')}
-                              <span className="text-sm text-red-600"> / night</span>
-                            </p>
-                            <p className={`text-sm font-semibold ${cat.saveColor}`}>
-                              Save ₹{savedAmount.toLocaleString('en-IN')}
-                            </p>
-                          </div>
-                        ) : (
-                          <p className={`font-bold ${cat.priceColor}`}>
-                            ₹{price.toLocaleString('en-IN')}
-                            <span className="text-red-600 text-sm font-normal">
-                              {' '}
-                              / night
-                            </span>
-                          </p>
-                        )}
-
-                        {/* Amenities */}
-                        <div className="flex flex-wrap gap-2 text-xs mt-2">
-                          {room.amenities?.slice(0, 5).map((tag, idx) => (
-                            <span
-                              key={idx}
-                              className={`px-2 py-1 rounded-full ${cat.tagBg}`}
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex justify-between mt-3 space-x-2">
-                          <button
-                            onClick={() => setSelectedRoom(room)}
-                            className={`flex-1 px-4 py-2 text-white text-sm font-semibold rounded-lg ${cat.bookBtn} cursor-pointer`}
-                          >
-                            Book Now
-                          </button>
-                          <a
-                            href={`/rooms/${slugify(`${room.title}-in-${room.location?.city || ''}`, { lower: true })}/${room._id}`}
-                            className={`flex-1 px-4 py-2 border text-sm font-semibold rounded-lg text-center ${cat.outlineBtn}`}
-                          >
-                            View Details
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-gray-500">No {cat.title} available.</p>
-              )}
-            </div>
+    <section className="bg-[#fffaf4] py-20 sm:py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <p className="eyebrow">Handpicked stays</p>
+            <h2 className="font-display mt-3 text-4xl font-semibold text-[#30231d] sm:text-5xl">A place that feels right.</h2>
           </div>
-        ))}
+          <Link href="/homestays" className="inline-flex items-center gap-2 text-sm font-bold text-[#a54528] transition hover:text-[#71301f]">View all homestays <ArrowRight className="h-4 w-4" /></Link>
+        </div>
 
-        {/* ✅ Booking Modal */}
-        {selectedRoom && (
-          <BookingModal
-            room={selectedRoom}
-            onClose={() => setSelectedRoom(null)}
-          />
-        )}
+        <div className="mt-12 space-y-16">
+          {categories.map((category) => {
+            const rooms = roomsByCategory[category.key] || [];
+            return (
+              <section key={category.key}>
+                <div className="mb-6 flex items-end justify-between gap-5 border-b border-[#e8dbcd] pb-5">
+                  <div className="flex items-start gap-3">
+                    <span className={`grid h-10 w-10 place-items-center rounded-full ${category.tone}`}><category.Icon className="h-5 w-5" /></span>
+                    <div>
+                      <h3 className="text-xl font-bold text-[#30231d]">{category.title}</h3>
+                      <p className="mt-1 text-sm text-[#796b62]">{category.description}</p>
+                    </div>
+                  </div>
+                  {!loading && rooms.length > 0 && <span className="hidden text-sm font-semibold text-[#8b7567] sm:block">{rooms.length} available</span>}
+                </div>
+
+                {loading ? (
+                  <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3].map((item) => <div key={item} className="h-[380px] animate-pulse rounded-[1.35rem] bg-[#f1e6d9]" />)}
+                  </div>
+                ) : rooms.length > 0 ? (
+                  <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                    {rooms.map((room) => <RoomCard key={room._id} room={room} category={category} onBookNow={setSelectedRoom} />)}
+                  </div>
+                ) : (
+                  <div className="rounded-[1.2rem] border border-dashed border-[#d9c8b6] bg-white px-6 py-8 text-sm text-[#796b62]">New stays in this collection will appear here shortly.</div>
+                )}
+              </section>
+            );
+          })}
+        </div>
       </div>
+
+      {selectedRoom && <BookingModal room={selectedRoom} onClose={() => setSelectedRoom(null)} />}
     </section>
   );
 }

@@ -1,142 +1,113 @@
 'use client';
-import Image from 'next/image';
+
 import Link from 'next/link';
-import { Building2, ShoppingBag, Phone, User, LogOut, Menu, X } from 'lucide-react';
+import { ChevronRight, Headphones, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+
 export default function Header() {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+
   function handleLogout() {
     logout();
     window.location.href = '/';
   }
 
-  function handleListProperty(e) {
-    e.preventDefault(); // prevent default navigation
-    if (user) {
-      logout(); // logout first if logged in
-    }
-    router.push('/login'); // then navigate
+  function handleListProperty(event) {
+    event.preventDefault();
+    if (user) logout();
+    router.push('/login');
+    setIsOpen(false);
   }
 
-  function handleNavClick() {
-    setIsOpen(false); // close mobile menu after clicking
+  function closeMenu() {
+    setIsOpen(false);
   }
+
+  const publicLinks = (
+    <>
+      <Link href="/homestays" onClick={closeMenu}>Find a stay</Link>
+      <Link href="/login" onClick={handleListProperty}>List your property</Link>
+      <Link href="/my-bookings" onClick={closeMenu}>My bookings</Link>
+    </>
+  );
+
+  const accountLinks = user?.role === 'admin' ? (
+    <>
+      <Link href="/admin/rooms" onClick={closeMenu}>Properties</Link>
+      <Link href="/admin/bookings" onClick={closeMenu}>Bookings</Link>
+      <Link href="/admin/owners" onClick={closeMenu}>Owners</Link>
+    </>
+  ) : user?.role === 'owner' ? (
+    <>
+      <Link href="/listed-property" onClick={closeMenu}>My properties</Link>
+      <Link href="/property-list" onClick={closeMenu}>List a property</Link>
+    </>
+  ) : publicLinks;
 
   return (
-    <header className="border-b bg-white shadow-sm sticky top-0 z-50">
-      <div className="mx-auto px-4 flex items-center justify-between h-16">
-        {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <Image src="/awadh1_logo.png" alt="Stay Logo" width={90} height={30} priority />
+    <header className="sticky top-0 z-50 border-b border-[#eadfd3] bg-[#fffaf4]/95 backdrop-blur">
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="group" aria-label="Awadh Hotels home">
+          <div className="leading-none">
+            <span className="font-display block text-[1.45rem] font-semibold tracking-[-0.06em] text-[#4b2116]">Awadh</span>
+            <span className="block pt-0.5 text-[0.57rem] font-bold uppercase tracking-[0.28em] text-[#a54528]">Hotels</span>
+          </div>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center space-x-6 text-sm">
-          {user?.role === 'admin' ? (
-            <>
-              <Link href="/admin/rooms" className="hover:text-red-500">All Properties</Link>
-              <Link href="/admin/coupons" className="hover:text-red-500">Coupons</Link>
-              <Link href="/admin/pending-property" className="hover:text-red-500">Pending Property</Link>
-              <Link href="/admin/approved-property" className="hover:text-red-500">Approved Property</Link>
-              <Link href="/admin/owners" className="hover:text-red-500">Owner List</Link>
-              <Link href="/admin/bookings" className="hover:text-red-500">All Booking</Link>
-            </>
-          ) : user?.role === 'owner' ? (
-            <>
-              <Link href="/listed-property" className="hover:text-red-500">Listed Property</Link>
-              <Link href="/property-list" className="hover:text-red-500">Property List</Link>
-            </>
-          ) : (
-            <>
-              <Link href="/login" onClick={handleListProperty} className="hover:text-red-500">
-                List Your Property
-              </Link>
-              <Link href="/my-bookings" className="hover:text-red-500">My Booking</Link>
-            </>
-          )}
-
-          {/* Phone */}
-          <div className="flex items-center space-x-1 text-gray-700">
-            <Phone className="h-4 w-4" />
-            <span className="text-sm">+91 9250538645</span>
-          </div>
-
-          {/* Login / Logout */}
-          {!user ? (
-            <Link href="/login" className="flex items-center space-x-1 hover:text-red-500">
-              <User className="h-4 w-4" />
-              <span>Login / Signup</span>
-            </Link>
-          ) : (
-            <button onClick={handleLogout} className="flex items-center space-x-1 hover:text-red-500 cursonr-pointer">
-              <LogOut className="h-4 w-4" />
-              <span className='cursor-pointer'>Logout</span>
-            </button>
-          )}
+        <nav className="hidden items-center gap-7 text-sm font-semibold text-[#493c35] lg:flex">
+          {accountLinks}
         </nav>
 
-        {/* Mobile Menu Toggle */}
+        <div className="hidden items-center gap-4 lg:flex">
+          <a href="tel:+919250538645" className="flex items-center gap-2 text-xs font-semibold text-[#665850] transition hover:text-[#a54528]">
+            <Headphones className="h-4 w-4 text-[#a54528]" aria-hidden="true" />
+            <span>+91 92505 38645</span>
+          </a>
+          {!user ? (
+            <Link href="/login" className="awadh-button px-4 py-2 text-sm">
+              Sign in <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          ) : (
+            <button onClick={handleLogout} className="awadh-button-secondary px-4 py-2 text-sm">
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              Log out
+            </button>
+          )}
+        </div>
+
         <button
-          className="md:hidden text-gray-700 hover:text-black"
-          onClick={() => setIsOpen(!isOpen)}
+          type="button"
+          className="grid h-10 w-10 place-items-center rounded-full border border-[#dfcbb5] text-[#4b2116] lg:hidden"
+          onClick={() => setIsOpen((open) => !open)}
+          aria-label={isOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isOpen}
         >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
-      {/* Mobile Nav */}
       {isOpen && (
-        <div className="md:hidden bg-white shadow-md border-t px-6 py-4 space-y-4">
-          <div className="flex flex-col space-y-3">
-            {user?.role === 'admin' ? (
-              <>
-                <Link href="/admin/rooms" onClick={handleNavClick} className="block hover:text-red-500">All Properties</Link>
-                <Link href="/admin/coupons" onClick={handleNavClick} className="block hover:text-red-500">Coupons</Link>
-                <Link href="/admin/pending-property" onClick={handleNavClick} className="block hover:text-red-500">Pending Property</Link>
-                <Link href="/admin/approved-property" onClick={handleNavClick} className="block hover:text-red-500">Approved Property</Link>
-                <Link href="/admin/owners" onClick={handleNavClick} className="block hover:text-red-500">Owner List</Link>
-                <Link href="/admin/bookings" onClick={handleNavClick} className="block hover:text-red-500">All Booking</Link>
-              </>
-            ) : user?.role === 'owner' ? (
-              <>
-                <Link href="/listed-property" onClick={handleNavClick} className="block hover:text-red-500">Listed Property</Link>
-                <Link href="/property-list" onClick={handleNavClick} className="block hover:text-red-500">Property List</Link>
-              </>
+        <div className="border-t border-[#eadfd3] bg-[#fffaf4] px-5 pb-6 pt-3 lg:hidden">
+          <nav className="mx-auto flex max-w-7xl flex-col divide-y divide-[#eadfd3] text-base font-semibold text-[#493c35] [&>a]:py-3">
+            {accountLinks}
+          </nav>
+          <div className="mx-auto mt-5 flex max-w-7xl items-center justify-between rounded-2xl bg-[#f4eadc] px-4 py-3 text-sm">
+            <a href="tel:+919250538645" className="flex items-center gap-2 font-semibold text-[#4b2116]">
+              <Headphones className="h-4 w-4 text-[#a54528]" aria-hidden="true" />
+              +91 92505 38645
+            </a>
+            {!user ? (
+              <Link href="/login" onClick={closeMenu} className="text-[#a54528]">Sign in</Link>
             ) : (
-              <>
-                <Link href="/login" onClick={(e) => {handleNavClick(); handleListProperty(e);}} className="hover:text-red-500">
-                  List Your Property
-                </Link>
-                <Link href="/my-bookings" onClick={handleNavClick} className="block hover:text-red-500">My Booking</Link>
-              </>
+              <button onClick={handleLogout} className="text-[#a54528]">Log out</button>
             )}
           </div>
-
-          <div className="pt-3">
-            <p className="font-medium text-gray-800">+91 9250538645</p>
-            <p className="text-sm text-gray-500">Call us to Book now</p>
-          </div>
-
-          {!user ? (
-            <Link href="/login" onClick={handleNavClick} className="block font-medium hover:text-red-500">
-              Login / Signup
-            </Link>
-          ) : (
-            <button
-              onClick={handleLogout}
-              className="block w-full text-left font-medium hover:text-red-500"
-            >
-              Logout
-            </button>
-          )}
         </div>
       )}
     </header>
   );
 }
-
-

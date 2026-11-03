@@ -18,6 +18,9 @@ const { getOwnersWithPendingRooms,
     searchUsers
 } = require('../controllers/adminController');
 const authMiddleware = require("../middleware/authMiddleware");
+const { requireRole } = authMiddleware;
+
+router.use(authMiddleware, requireRole('admin'));
 // List owners with pending rooms
 router.get('/pending-owners', getOwnersWithPendingRooms);
 
@@ -40,9 +43,9 @@ router.get('/owner/:ownerId/rooms', getRoomsByOwner);
 
 router.get('/bookings', getAllBookings);
 // enable toggling coupon active from admin UI
-router.put('/coupons/:couponId/active', authMiddleware, toggleCouponActive);
-router.put('/coupons/:couponId', authMiddleware, updateCoupon);
-router.get('/users/:userId/bookings', authMiddleware, getUserWithBookings);
+router.put('/coupons/:couponId/active', toggleCouponActive);
+router.put('/coupons/:couponId', updateCoupon);
+router.get('/users/:userId/bookings', getUserWithBookings);
 router.get('/rooms/', getApprovedAvailableRooms);
 // router.post('/book-room', authMiddleware, adminBookRoomForGuest);
 router.get('/users/search', searchUsers);

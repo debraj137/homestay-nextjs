@@ -1,87 +1,58 @@
 'use client';
+
 import Link from 'next/link';
-import { Facebook, Instagram, Twitter } from 'lucide-react';
+import { Facebook, Headphones, Mail, MapPin } from 'lucide-react';
+
+const exploreLinks = [
+  ['Ayodhya', '/search?city=Ayodhya'],
+  ['Varanasi', '/search?city=Varanasi'],
+  ['Mathura', '/search?city=Mathura'],
+  ['Vrindavan', '/search?city=Vrindavan'],
+];
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300 min-h-[220px]">
-      <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
-
-        {/* Company */}
+    <footer className="bg-[#281914] text-[#eaded1]">
+      <div className="mx-auto grid max-w-7xl gap-12 px-5 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.45fr_.8fr_.8fr_1.1fr] lg:px-8">
         <div>
-          <h3 className="text-white font-semibold uppercase mb-4 border-b-2 border-red-500 inline-block">
-            Company
-          </h3>
-          <ul className="space-y-2">
-            <li><a href="#" className="hover:text-red-400 transition">About Us</a></li>
-            <li><a href="#" className="hover:text-red-400 transition">Careers</a></li>
-            <li><a href="#" className="hover:text-red-400 transition">STAY for Business</a></li>
-            <li><a href="#" className="hover:text-red-400 transition">Corporate Booking</a></li>
+          <p className="font-display text-3xl font-semibold text-[#fff8ef]">Awadh Hotels</p>
+          <p className="mt-4 max-w-sm text-sm leading-6 text-[#cdbdaf]">Thoughtful stays for the places that call you back. Find room for your journey, your people and a slower morning.</p>
+          <a href="https://www.facebook.com/profile.php?id=61583136273650" target="_blank" rel="noreferrer" className="mt-6 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-[#f0c17e] transition hover:border-[#f0c17e] hover:text-white" aria-label="Awadh Hotels on Facebook">
+            <Facebook className="h-4 w-4" />
+          </a>
+        </div>
+
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-[#e9b96f]">Explore</h2>
+          <ul className="mt-5 space-y-3 text-sm">
+            {exploreLinks.map(([label, href]) => <li key={label}><Link href={href} className="transition hover:text-[#f0c17e]">Stays in {label}</Link></li>)}
           </ul>
         </div>
 
-        {/* Support */}
         <div>
-          <h3 className="text-white font-semibold uppercase mb-4 border-b-2 border-red-500 inline-block">
-            Support
-          </h3>
-          <ul className="space-y-2">
-            <li><Link href="/help-center" className="hover:text-red-400 transition">Help Center</Link></li>
-            <li><Link href="/faqs" className="hover:text-red-400 transition">FAQs</Link></li>
-            <li><Link href="/cancellation-policy" className="hover:text-red-400 transition">Cancellation Policy</Link></li>
-            <li><Link href="/terms-and-conditions" className="hover:text-red-400 transition">Terms & Conditions</Link></li>
+          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-[#e9b96f]">Help</h2>
+          <ul className="mt-5 space-y-3 text-sm">
+            <li><Link href="/help-center" className="transition hover:text-[#f0c17e]">Help centre</Link></li>
+            <li><Link href="/faqs" className="transition hover:text-[#f0c17e]">Frequently asked questions</Link></li>
+            <li><Link href="/cancellation-policy" className="transition hover:text-[#f0c17e]">Cancellation policy</Link></li>
+            <li><Link href="/terms-and-conditions" className="transition hover:text-[#f0c17e]">Terms &amp; conditions</Link></li>
           </ul>
         </div>
 
-        {/* Explore */}
         <div>
-          <h3 className="text-white font-semibold uppercase mb-4 border-b-2 border-red-500 inline-block">
-            Explore
-          </h3>
-          <ul className="space-y-2">
-            <li><Link href="/search?city=Ayodhya" className="hover:text-red-400 transition">
-              Home Stay In Ayodhya
-            </Link></li>
-            <li><Link href="/search?city=Varanasi" className="hover:text-red-400 transition">Home Stay In Varanasi</Link></li>
-            <li><Link href="/search?city=Mathura" className="hover:text-red-400 transition">Home Stay In Mathura</Link></li>
-            <li><Link href="/search?city=Vrindavan" className="hover:text-red-400 transition">Home Stay In Vrindavan</Link></li>
+          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-[#e9b96f]">Talk to us</h2>
+          <ul className="mt-5 space-y-4 text-sm">
+            <li className="flex gap-3"><Headphones className="mt-0.5 h-4 w-4 shrink-0 text-[#e9b96f]" /><a href="tel:+919250538645" className="transition hover:text-[#f0c17e]">+91 92505 38645</a></li>
+            <li className="flex gap-3"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#e9b96f]" /><a href="mailto:contact@awadhdarsan.com" className="break-all transition hover:text-[#f0c17e]">contact@awadhdarsan.com</a></li>
+            <li className="flex gap-3 text-[#cdbdaf]"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#e9b96f]" />Serving Ayodhya and sacred destinations across North India.</li>
           </ul>
-        </div>
-
-        {/* Contact */}
-        <div>
-          <h3 className="text-white font-semibold uppercase mb-4 border-b-2 border-red-500 inline-block">
-            Contact Us
-          </h3>
-          <p>
-            Email:{' '}
-            <a href="mailto:contact@awadhdarsan.com" className="text-red-400 hover:text-red-300 transition">
-              contact@awadhdarsan.com
-            </a>
-          </p>
-          <p className="mt-2">
-            Phone:{' '}
-            <a href="tel:+911234567890" className="text-red-400 hover:text-red-300 transition">
-              +91 9250538645
-            </a>
-          </p>
-          <div className="flex space-x-3 mt-4">
-            <a href="https://www.facebook.com/profile.php?id=61583136273650" className="p-2 bg-gray-700 rounded-full hover:bg-red-500 transition">
-              <Facebook size={18} className="text-white" />
-            </a>
-            <a href="#" className="p-2 bg-gray-700 rounded-full hover:bg-red-500 transition">
-              <Instagram size={18} className="text-white" />
-            </a>
-            <a href="#" className="p-2 bg-gray-700 rounded-full hover:bg-red-500 transition">
-              <Twitter size={18} className="text-white" />
-            </a>
-          </div>
         </div>
       </div>
-
-      {/* Bottom Section */}
-      <div className="border-t border-gray-700 mt-8 pt-4 text-center text-sm text-gray-500">
-        © 2025 Awadh Hotels Pvt. Ltd. All rights reserved.
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-[#bba99a] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <span>© {new Date().getFullYear()} Awadh Hotels. All rights reserved.</span>
+          <span>Made for journeys that matter.</span>
+        </div>
       </div>
     </footer>
   );

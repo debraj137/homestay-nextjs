@@ -18,8 +18,11 @@ export default function VerifyPhonePage() {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/verify-mobile-otp`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, otp }),
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${sessionStorage.getItem('signupToken')}`,
+                },
+                body: JSON.stringify({ otp }),
             });
 
             const data = await res.json();
@@ -47,8 +50,11 @@ export default function VerifyPhonePage() {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/resend-mobile-otp`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${sessionStorage.getItem('signupToken')}`,
+                },
+                body: JSON.stringify({}),
             });
 
             const data = await res.json();

@@ -29,7 +29,8 @@ exports.register = async (req, res) => {
 
     const emailOtp = generateOtp();
     const expiry = new Date(Date.now() + 10 * 60 * 1000);
-    const role = req.body.role || 'user';
+    // Public registration can create a customer or an owner application, never an admin.
+    const role = req.body.role === 'owner' ? 'owner' : 'user';
     const user = new User({
       name,
       email,
@@ -167,7 +168,6 @@ exports.login = async (req, res) => {
 
     // Find user
     const user = await User.findOne({ email });
-    console.log("Login attempt for user:", user);
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     // Allow login without mobile verification, but keep email verification mandatory.
@@ -177,8 +177,6 @@ exports.login = async (req, res) => {
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log(password, user.password);
-    console.log("Password match:", isMatch);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     // Generate JWT
@@ -211,10 +209,12 @@ exports.login = async (req, res) => {
 // Upgrade user role to "owner"
 exports.becomeOwner = async (req, res) => {
   try {
-    const { userId } = req.body;
-
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (user.role === 'admin') {
+      return res.status(400).json({ message: 'Admin accounts cannot be changed to owner accounts' });
+    }
 
     if (user.role === 'owner') {
       return res.json({ message: 'You are already an owner' });
@@ -223,7 +223,10 @@ exports.becomeOwner = async (req, res) => {
     user.role = 'owner';
     await user.save();
 
-    res.json({ message: 'You are now registered as an owner', user });
+    res.json({
+      message: 'You are now registered as an owner',
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error updating role' });
@@ -247,7 +250,13 @@ exports.verifyEmailOtp = async (req, res) => {
     user.emailOtpExpiry = null;
     await user.save();
 
-    res.json({ message: 'Email verified successfully' });
+    const signupToken = jwt.sign(
+      { id: user._id, purpose: 'signup' },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    res.json({ message: 'Email verified successfully', signupToken });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error verifying email OTP' });
@@ -305,16 +314,12 @@ exports.sendEmailOtp = async (req, res) => {
 // SAVE NAME after email OTP verified
 exports.saveName = async (req, res) => {
   try {
-    const { email, name } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
+    const { name } = req.body;
     if (!name) {
       return res.status(400).json({ message: "Name is required" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -326,7 +331,7 @@ exports.saveName = async (req, res) => {
     user.name = name; // ✅ update name
     await user.save();
 
-    res.json({ message: "Name saved successfully", user });
+    res.json({ message: "Name saved successfully" });
   } catch (err) {
     console.error("Error saving name:", err);
     res.status(500).json({ message: "Server error while saving name" });
@@ -337,8 +342,11 @@ exports.saveName = async (req, res) => {
 // SAVE PASSWORD
 exports.savePassword = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    const { password } = req.body;
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -355,9 +363,10 @@ exports.savePassword = async (req, res) => {
 // SAVE MOBILE NUMBER
 exports.sendMobileOtp = async (req, res) => {
   try {
-    const { email, mobileNumber } = req.body;
+    const { mobileNumber } = req.body;
+    if (!mobileNumber) return res.status(400).json({ message: "Mobile number is required" });
 
-    const user = await User.findOne({ email });
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.mobileNumber = mobileNumber;
@@ -377,8 +386,7 @@ exports.sendMobileOtp = async (req, res) => {
 // VERIFY MOBILE OTP
 exports.verifyMobileOtp = async (req, res) => {
   try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.mobileVerified = true;
@@ -413,8 +421,8 @@ exports.verifyMobileOtp = async (req, res) => {
 // RESEND MOBILE OTP
 exports.resendMobileOtp = async (req, res) => {
   try {
-    const { email, mobileNumber } = req.body;
-    const user = await User.findOne({ email });
+    const { mobileNumber } = req.body;
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (mobileNumber) {
@@ -485,7 +493,13 @@ exports.verifyForgotPasswordOtp = async (req, res) => {
     user.emailOtpExpiry = null;
     await user.save();
 
-    res.json({ message: "OTP verified successfully" });
+    const passwordResetToken = jwt.sign(
+      { id: user._id, purpose: 'password_reset' },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    res.json({ message: "OTP verified successfully", passwordResetToken });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -495,13 +509,13 @@ exports.verifyForgotPasswordOtp = async (req, res) => {
 // RESET PASSWORD
 exports.resetPassword = async (req, res) => {
   try {
-    const { email, newPassword } = req.body;
+    const { newPassword } = req.body;
 
     if (!newPassword || newPassword.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

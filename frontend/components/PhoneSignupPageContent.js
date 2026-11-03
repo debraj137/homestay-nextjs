@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
+import AuthShell from '@/components/AuthShell';
 
 export default function PhoneSignupPageContent() {
   const [phone, setPhone] = useState('');
@@ -16,8 +18,11 @@ export default function PhoneSignupPageContent() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/send-mobile-otp`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, mobileNumber: phone }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionStorage.getItem('signupToken')}`,
+        },
+        body: JSON.stringify({ mobileNumber: phone }),
       });
 
       const data = await res.json();
@@ -27,6 +32,7 @@ export default function PhoneSignupPageContent() {
       }
 
       toast.success('Mobile number saved successfully');
+      sessionStorage.removeItem('signupToken');
       router.push('/login');
     } catch (err) {
       console.error(err);
@@ -37,6 +43,25 @@ export default function PhoneSignupPageContent() {
   }
 
   return (
+    <>
+      <AuthShell
+        step={3}
+        title="Add your mobile number"
+        description="We use your number only for useful booking updates and host coordination."
+        footer={<>Have an account already? <Link href="/login" className="auth-link">Sign in</Link></>}
+      >
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="signup-phone">Mobile number</label>
+            <div className="flex gap-2">
+              <span className="flex min-h-12 items-center rounded-xl border border-[#ddcbbb] bg-[#f7ede2] px-3 text-sm font-bold text-[#704633]">+91</span>
+              <input id="signup-phone" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile number" value={phone} onChange={(event) => setPhone(event.target.value)} required className="auth-input" />
+            </div>
+          </div>
+          <button type="submit" disabled={loading} className="awadh-button auth-submit">{loading ? 'Saving…' : 'Complete account'}</button>
+        </form>
+      </AuthShell>
+      {false && (
     <div
       className="flex-1 flex items-center justify-center bg-cover bg-center relative h-screen"
       style={{ backgroundImage: "url('/bed.jpg')" }}
@@ -78,5 +103,7 @@ export default function PhoneSignupPageContent() {
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 }

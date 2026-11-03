@@ -21,6 +21,7 @@ export default function VerifyOtpPage() {
         const data = await res.json();
         if (!res.ok) return setMsg(data.message);
 
+        sessionStorage.setItem('passwordResetToken', data.passwordResetToken);
         router.push(`/forgot-password/reset?email=${email}`);
     }
 

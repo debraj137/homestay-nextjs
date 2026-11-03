@@ -92,19 +92,15 @@ function validateHourlyRules(startAt, hours) {
 }
 
 exports.createBooking = async (req, res) => {
-  console.log("Create booking request body:", req.body);
   try {
+    console.log("========== CREATE BOOKING CALLED ==========");
     const {
-      userId,
       roomId,
       checkInDate,
       checkOutDate,
       numberOfAdult,
       numberOfChild,
       // totalPrice,  <-- IGNORE client totalPrice for server-side price calc
-      mobileNumber,
-      status = 'confirmed',
-
       // New/optional hourly fields:
       bookingType = 'full', // 'full' | 'hourly'
       checkInTime, // e.g. "04:00 PM"
@@ -112,15 +108,19 @@ exports.createBooking = async (req, res) => {
 
       couponCode // NEW: string coupon code
     } = req.body;
+    const userId = req.user.id;
 
     // Basic validation
-    if (!userId || !roomId || !checkInDate || !checkOutDate) {
+    if (!roomId || !checkInDate || !checkOutDate) {
       return res.status(400).json({ message: 'Missing required booking fields' });
     }
 
     // compute base dates
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
+    if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime())) {
+      return res.status(400).json({ message: 'Invalid check-in or check-out date' });
+    }
 
     // For full-day bookings, ensure date range is valid
     if (bookingType === 'full') {
@@ -187,8 +187,9 @@ exports.createBooking = async (req, res) => {
     });
 
     if (overlappingBooking) {
+      console.log('overlapping response: ',res);
       return res.status(400).json({
-        message: 'Room already booked for the selected time range'
+        message: 'Room is already booked for the selected time range'
       });
     }
 
@@ -197,6 +198,12 @@ exports.createBooking = async (req, res) => {
     // -----------------------------
     const room = await Room.findById(roomId);
     if (!room) return res.status(404).json({ message: 'Room not found' });
+    if (!room.isApproved || !room.isAvailable) {
+      return res.status(400).json({ message: 'This room is not currently available for booking' });
+    }
+
+    const userDoc = await User.findById(userId).select('name email mobileNumber');
+    if (!userDoc) return res.status(401).json({ message: 'User account not found' });
 
     // Apply room-level discount (if present)
     // const roomBasePrice = room.discount && room.discount > 0
@@ -319,8 +326,8 @@ exports.createBooking = async (req, res) => {
       subtotal: actualPrice,               // actual/original price
       roomDiscountAmount: coupon ? 0 : roomDiscountSaving,
       totalPrice: finalPrice, // final price after coupon (server-side)
-      mobileNumber,
-      status,
+      mobileNumber: userDoc.mobileNumber,
+      status: 'confirmed',
       coupon: coupon ? {
         code: coupon.code,
         discountType: coupon.discountType,
@@ -350,8 +357,6 @@ exports.createBooking = async (req, res) => {
 
     // Fetch extra info for notifications (we already have room above; fetch owner)
     const populatedRoom = await Room.findById(roomId).populate('ownerId');
-    const userDoc = await User.findById(userId);
-
     const startStr = booking.startAt ? booking.startAt.toString() : new Date(booking.checkInDate).toDateString();
     const endStr = booking.endAt ? booking.endAt.toString() : new Date(booking.checkOutDate).toDateString();
 
@@ -411,9 +416,9 @@ exports.createBooking = async (req, res) => {
     //   });
     // }
 
-
+    console.log("create booking", booking)
     res.status(201).json(booking);
-  } catch (err) {
+     } catch (err) {
     console.error("Booking creation error:", err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -425,6 +430,9 @@ exports.createBooking = async (req, res) => {
 exports.getUserBookings = async (req, res) => {
   try {
     const { userId } = req.params;
+    if (req.user.role !== 'admin' && req.user.id !== userId) {
+      return res.status(403).json({ message: 'You can only view your own bookings' });
+    }
     const bookings = await Booking.find({ userId })
       .populate('roomId', 'title price location images') // fetch room details
       .sort({ createdAt: -1 });
@@ -445,6 +453,10 @@ exports.cancelBooking = async (req, res) => {
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (req.user.role !== 'admin' && booking.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'You can only cancel your own bookings' });
     }
 
     // Already canceled?
@@ -483,6 +495,9 @@ exports.cancelBooking = async (req, res) => {
 // ✅ Modify booking by admin (with pricing logic)
 exports.modifyBookingByAdmin = async (req, res) => {
   try {
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
     const { bookingId } = req.params;
     const {
       checkInDate,
@@ -647,5 +662,3 @@ exports.modifyBookingByAdmin = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
-

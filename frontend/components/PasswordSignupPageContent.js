@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
+import AuthShell from '@/components/AuthShell';
 
 export default function PasswordSignupPage() {
   const [password, setPassword] = useState('');
@@ -17,8 +19,11 @@ export default function PasswordSignupPage() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/save-password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem('signupToken')}`,
+        },
+        body: JSON.stringify({ password }),
       });
 
       const data = await res.json();
@@ -38,6 +43,25 @@ export default function PasswordSignupPage() {
   }
 
   return (
+    <>
+      <AuthShell
+        step={2}
+        title="Create a password"
+        description="Choose a password with at least six characters to keep your bookings protected."
+        footer={<>Already registered? <Link href="/login" className="auth-link">Sign in</Link></>}
+      >
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="signup-password">Password</label>
+            <div className="relative">
+              <input id="signup-password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={6} placeholder="At least 6 characters" value={password} onChange={(event) => setPassword(event.target.value)} required className="auth-input pr-20" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 text-xs font-bold text-[#a54528]" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? 'Hide' : 'Show'}</button>
+            </div>
+          </div>
+          <button type="submit" disabled={loading} className="awadh-button auth-submit">{loading ? 'Saving…' : 'Continue'}</button>
+        </form>
+      </AuthShell>
+      {false && (
     <div
       className="flex-1 flex items-center justify-center bg-cover bg-center relative h-screen"
       style={{ backgroundImage: "url('/bed.jpg')" }}
@@ -84,5 +108,7 @@ export default function PasswordSignupPage() {
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 }

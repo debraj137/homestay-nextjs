@@ -62,15 +62,8 @@
 //   );
 // }
 
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata = {
   title: {
@@ -112,7 +105,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistMono.variable} min-h-screen`}>
+      <body className="min-h-screen">
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

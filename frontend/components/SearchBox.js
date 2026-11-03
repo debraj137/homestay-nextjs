@@ -1,290 +1,82 @@
-// "use client";
-// import { useState } from "react";
-// import { useRouter } from "next/navigation";
-// import { Search, Plus, Minus, Zap, Moon } from "lucide-react";
-// import { format, addDays } from "date-fns";
-// import { DateRange } from "react-date-range";
-// import "react-date-range/dist/styles.css";
-// import "react-date-range/dist/theme/default.css";
-
-
-// export default function SearchBox() {
-//   const router = useRouter();
-//   const [mode, setMode] = useState("daily");
-//   const [city, setCity] = useState("Ayodhya");
-//   const [showCalendar, setShowCalendar] = useState(false);
-//   const [dateRange, setDateRange] = useState([
-//     { startDate: new Date(), endDate: addDays(new Date(), 1), key: "selection" },
-//   ]);
-//   const [checkInTime, setCheckInTime] = useState("04:00 PM");
-//   const [hours, setHours] = useState(3);
-//   const [adults, setAdults] = useState(1);
-//   const [children, setChildren] = useState(0);
-
-//   const timeOptions = [
-//     "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM",
-//     "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM",
-//     "09:00 PM", "10:00 PM",
-//   ];
-
-//   const handleSubmit = (e) => {
-//     e.preventDefault();
-
-//     if (mode === "hourly") {
-//       router.push(
-//         `/search?city=${encodeURIComponent(city)}&bookingType=hourly&checkInDate=${format(
-//           dateRange[0].startDate,
-//           "yyyy-MM-dd"
-//         )}&checkInTime=${checkInTime}&hours=${hours}`
-//       );
-//     } else {
-//       router.push(
-//         `/search?city=${encodeURIComponent(city)}&bookingType=daily&checkInDate=${format(
-//           dateRange[0].startDate,
-//           "yyyy-MM-dd"
-//         )}&checkOutDate=${format(
-//           dateRange[0].endDate,
-//           "yyyy-MM-dd"
-//         )}&adults=${adults}&children=${children}`
-//       );
-//     }
-//   };
-
-//   return (
-//     <div className="w-full flex justify-center mt-10">
-//       <form
-//         onSubmit={handleSubmit}
-//         className="bg-white shadow-lg rounded-3xl w-full max-w-[95rem] px-10 py-5 relative flex flex-col gap-5 transition-all duration-300"
-//         style={{ minHeight: "180px" }}
-//       >
-//         {/* 🔘 Toggle Buttons */}
-//         <div className="flex justify-center gap-2">
-//           <button
-//             type="button"
-//             onClick={() => setMode("daily")}
-//             className={`flex items-center gap-2 px-5 py-2 rounded-full font-semibold text-sm transition-all ${mode === "daily"
-//               ? "bg-gray-900 text-white shadow"
-//               : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-//               }`}
-//           >
-//             <Moon className="w-4 h-4" />
-//             Full-Day Stay
-//           </button>
-
-//           <button
-//             type="button"
-//             onClick={() => setMode("hourly")}
-//             className={`flex items-center gap-2 px-5 py-2 rounded-full font-semibold text-sm transition-all ${mode === "hourly"
-//               ? "bg-gray-900 text-white shadow"
-//               : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-//               }`}
-//           >
-//             <Zap className="w-4 h-4" />
-//             Hourly Stay
-//           </button>
-//         </div>
-
-//         {/* 📅 Search Fields */}
-//         <div className="flex flex-col md:flex-row items-center justify-between bg-white rounded-2xl shadow-sm border border-gray-200 px-8 py-3 min-h-[92px] gap-4 md:gap-2">
-//           {/* Where */}
-//           <div className="flex flex-col basis-[20%] px-2 border-r border-gray-200">
-//             <label className="text-xs text-gray-500 mb-1">Where ?</label>
-//             <select
-//               value={city}
-//               onChange={(e) => setCity(e.target.value)}
-//               className="text-lg font-semibold text-gray-800 bg-transparent focus:outline-none"
-//             >
-//               <option>Ayodhya</option>
-//               <option>Lucknow</option>
-//               <option>Varanasi</option>
-//             </select>
-//           </div>
-
-//           {/* When */}
-//           <div className="flex flex-col basis-[25%] px-2 border-r border-gray-200 relative">
-//             <label className="text-xs text-gray-500 mb-1">When ?</label>
-//             <button
-//               type="button"
-//               onClick={() => setShowCalendar(!showCalendar)}
-//               className="text-base font-semibold text-gray-800 text-left focus:outline-none whitespace-nowrap overflow-hidden text-ellipsis"
-//             >
-//               {mode === "hourly"
-//                 ? format(dateRange[0].startDate, "dd MMM yy")
-//                 : `${format(dateRange[0].startDate, "dd MMM yy")} - ${format(
-//                   dateRange[0].endDate,
-//                   "dd MMM yy"
-//                 )}`}
-//             </button>
-//             {showCalendar && (
-//               <div className="absolute top-full left-0 mt-2 z-50 bg-white shadow-lg rounded-xl border p-2">
-//                 <DateRange
-//                   ranges={dateRange}
-//                   onChange={(item) => setDateRange([item.selection])}
-//                   moveRangeOnFirstSelection={false}
-//                   minDate={new Date()}
-//                 />
-//                 <div className="flex justify-end">
-//                   <button
-//                     onClick={() => setShowCalendar(false)}
-//                     type="button"
-//                     className="px-4 py-1 bg-gray-700 hover:bg-gray-800 text-white text-sm rounded-lg"
-//                   >
-//                     Done
-//                   </button>
-//                 </div>
-//               </div>
-//             )}
-//           </div>
-
-//           {/* Adults & Children (Full Day) OR Time + Duration (Hourly) */}
-//           {mode === "hourly" ? (
-//             <div className="flex flex-row basis-[36%] justify-between px-2 border-r border-gray-200 gap-8">
-//               {/* Check-In Time */}
-//               <div className="flex flex-col flex-1 relative">
-//                 <label className="text-xs text-gray-500 mb-1">Check-In Time</label>
-//                 <div className="relative">
-//                   <select
-//                     value={checkInTime}
-//                     onChange={(e) => setCheckInTime(e.target.value)}
-//                     className="w-full min-w-[150px] text-lg font-semibold text-gray-800 bg-transparent focus:outline-none pr-10 appearance-none"
-//                   >
-//                     {timeOptions.map((t) => (
-//                       <option key={t}>{t}</option>
-//                     ))}
-//                   </select>
-//                   {/* custom dropdown arrow */}
-//                   <svg
-//                     xmlns="http://www.w3.org/2000/svg"
-//                     className="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
-//                     fill="none"
-//                     viewBox="0 0 24 24"
-//                     stroke="currentColor"
-//                     strokeWidth={2}
-//                   >
-//                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-//                   </svg>
-//                 </div>
-//               </div>
-
-//               {/* Duration */}
-//               <div className="flex flex-col flex-1 relative">
-//                 <label className="text-xs text-gray-500 mb-1">Duration (Hours)</label>
-//                 <div className="relative">
-//                   <select
-//                     value={hours}
-//                     onChange={(e) => setHours(Number(e.target.value))}
-//                     className="w-full min-w-[120px] text-lg font-semibold text-gray-800 bg-transparent focus:outline-none pr-10 appearance-none"
-//                   >
-//                     {[...Array(8)].map((_, i) => {
-//                       const val = i + 3;
-//                       return (
-//                         <option key={val} value={val}>
-//                           {val} Hour{val > 1 ? "s" : ""}
-//                         </option>
-//                       );
-//                     })}
-//                   </select>
-//                   {/* custom dropdown arrow */}
-//                   <svg
-//                     xmlns="http://www.w3.org/2000/svg"
-//                     className="w-4 h-4 text-gray-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
-//                     fill="none"
-//                     viewBox="0 0 24 24"
-//                     stroke="currentColor"
-//                     strokeWidth={2}
-//                   >
-//                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-//                   </svg>
-//                 </div>
-//               </div>
-//             </div>
-//           ) : (
-//             <div className="flex flex-row justify-between items-center basis-[30%] px-2 border-r border-gray-200">
-//               {/* Adults */}
-//               <div className="flex flex-col items-center">
-//                 <label className="text-xs text-gray-500 mb-1">Adults</label>
-//                 <div className="flex items-center justify-between border rounded-md px-3 h-[23px] w-28 bg-white">
-//                   <button
-//                     type="button"
-//                     onClick={() => setAdults(Math.max(1, adults - 1))}
-//                     className="p-1 text-gray-600 hover:text-black"
-//                   >
-//                     <Minus className="h-4 w-4" />
-//                   </button>
-//                   <span className="text-base font-semibold text-gray-800 w-6 text-center">
-//                     {adults}
-//                   </span>
-//                   <button
-//                     type="button"
-//                     onClick={() => setAdults(adults + 1)}
-//                     className="p-1 text-gray-600 hover:text-black"
-//                   >
-//                     <Plus className="h-4 w-4" />
-//                   </button>
-//                 </div>
-//               </div>
-
-//               <div className="h-10 w-px bg-gray-300"></div>
-
-//               {/* Children */}
-//               <div className="flex flex-col items-center">
-//                 <label className="text-xs text-gray-500 mb-1">Children</label>
-//                 <div className="flex items-center justify-between border rounded-md px-3 h-[23px]  w-28 bg-white">
-//                   <button
-//                     type="button"
-//                     onClick={() => setChildren(Math.max(0, children - 1))}
-//                     className="p-1 text-gray-600 hover:text-black"
-//                   >
-//                     <Minus className="h-4 w-4" />
-//                   </button>
-//                   <span className="text-base font-semibold text-gray-800 w-6 text-center">
-//                     {children}
-//                   </span>
-//                   <button
-//                     type="button"
-//                     onClick={() => setChildren(children + 1)}
-//                     className="p-1 text-gray-600 hover:text-black"
-//                   >
-//                     <Plus className="h-4 w-4" />
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-
-//           {/* Search Button */}
-//           <div className="flex justify-center px-2 basis-[14%]">
-//             <button
-//               type="submit"
-//               className="bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded-xl px-8 py-3 shadow-md w-full md:w-auto"
-//             >
-//               <div className="flex items-center justify-center gap-2">
-//                 <Search className="w-4 h-4" />
-//                 Search
-//               </div>
-//             </button>
-//           </div>
-//         </div>
-//       </form>
-//     </div>
-//   );
-// }
-
-///////////////////responsive design changes only/////////////////////
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Minus, Zap, Moon } from "lucide-react";
-import { format, addDays } from "date-fns";
-// import { DateRange } from "react-date-range";
-// import "react-date-range/dist/styles.css";
-// import "react-date-range/dist/theme/default.css";
+import {
+  CalendarDays,
+  Clock3,
+  MapPin,
+  Minus,
+  Moon,
+  Plus,
+  Search,
+  Users,
+  Zap,
+} from "lucide-react";
+import { addDays, format } from "date-fns";
 import dynamic from "next/dynamic";
 
 const DateRange = dynamic(
-  () => import("react-date-range").then((m) => m.DateRange),
-  { ssr: false }
+  () => import("react-date-range").then((module) => module.DateRange),
+  {
+    ssr: false,
+  },
 );
+
+const timeOptions = [
+  "11:00 AM",
+  "12:00 PM",
+  "01:00 PM",
+  "02:00 PM",
+  "03:00 PM",
+  "04:00 PM",
+  "05:00 PM",
+  "06:00 PM",
+  "07:00 PM",
+  "08:00 PM",
+  "09:00 PM",
+  "10:00 PM",
+];
+
+function GuestStepper({ label, value, onDecrease, onIncrease, minimum }) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+      <div>
+        <p className="text-[0.68rem] font-bold uppercase tracking-[0.13em] text-[#8b7567]">
+          {label}
+        </p>
+        <p className="mt-1 text-sm font-semibold text-[#30231d]">
+          {value}{" "}
+          {label === "Guests"
+            ? `adult${value !== 1 ? "s" : ""}`
+            : `child${value !== 1 ? "ren" : ""}`}
+        </p>
+      </div>
+      <div className="flex items-center rounded-full border border-[#dfcdbd] bg-[#fffdfa]">
+        <button
+          type="button"
+          onClick={onDecrease}
+          disabled={value <= minimum}
+          className="grid h-7 w-7 place-items-center rounded-full text-[#725f54] disabled:opacity-35"
+          aria-label={`Decrease ${label}`}
+        >
+          <Minus className="h-3.5 w-3.5" />
+        </button>
+        <span className="w-5 text-center text-sm font-bold text-[#30231d]">
+          {value}
+        </span>
+        <button
+          type="button"
+          onClick={onIncrease}
+          className="grid h-7 w-7 place-items-center rounded-full text-[#725f54]"
+          aria-label={`Increase ${label}`}
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function SearchBox() {
   const router = useRouter();
@@ -292,252 +84,230 @@ export default function SearchBox() {
   const [city, setCity] = useState("Ayodhya");
   const [showCalendar, setShowCalendar] = useState(false);
   const [dateRange, setDateRange] = useState([
-    { startDate: new Date(), endDate: addDays(new Date(), 1), key: "selection" },
+    {
+      startDate: new Date(),
+      endDate: addDays(new Date(), 1),
+      key: "selection",
+    },
   ]);
   const [checkInTime, setCheckInTime] = useState("04:00 PM");
   const [hours, setHours] = useState(3);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
 
-  const timeOptions = [
-    "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM",
-    "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM",
-    "09:00 PM", "10:00 PM",
-  ];
+  function handleSubmit(event) {
+    event.preventDefault();
+    const startDate = format(dateRange[0].startDate, "yyyy-MM-dd");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
     if (mode === "hourly") {
       router.push(
-        `/search?city=${encodeURIComponent(city)}&bookingType=hourly&checkInDate=${format(
-          dateRange[0].startDate,
-          "yyyy-MM-dd"
-        )}&checkInTime=${encodeURIComponent(checkInTime)}&hours=${hours}`
+        `/search?city=${encodeURIComponent(city)}&bookingType=hourly&checkInDate=${startDate}&checkInTime=${encodeURIComponent(checkInTime)}&hours=${hours}&adults=${adults}&children=${children}`,
       );
-    } else {
-      router.push(
-        `/search?city=${encodeURIComponent(city)}&bookingType=full&checkInDate=${format(
-          dateRange[0].startDate,
-          "yyyy-MM-dd"
-        )}&checkOutDate=${format(
-          dateRange[0].endDate,
-          "yyyy-MM-dd"
-        )}&adults=${adults}&children=${children}`
-      );
+      return;
     }
-  };
+
+    router.push(
+      `/search?city=${encodeURIComponent(city)}&bookingType=full&checkInDate=${startDate}&checkOutDate=${format(dateRange[0].endDate, "yyyy-MM-dd")}&adults=${adults}&children=${children}`,
+    );
+  }
+
+  const calendar = (
+    <>
+      <DateRange
+        ranges={dateRange}
+        onChange={(item) => setDateRange([item.selection])}
+        moveRangeOnFirstSelection={false}
+        minDate={new Date()}
+        rangeColors={["#a54528"]}
+      />
+      <div className="flex justify-end border-t border-[#eadfd3] px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setShowCalendar(false)}
+          className="awadh-button px-5 py-2 text-sm"
+        >
+          Done
+        </button>
+      </div>
+    </>
+  );
 
   return (
-    <div className="w-full flex justify-center mt-10 px-3 md:px-5">
+    <div className="relative mt-10 w-full">
       <form
         onSubmit={handleSubmit}
-        className="min-h-[220px] bg-white shadow-lg rounded-3xl w-full max-w-[1340px] px-4 md:px-8 py-6 transition-all duration-300"
+        className="rounded-[1.7rem] bg-[#fffdf9] p-3 shadow-[0_24px_60px_rgba(15,9,6,.34)] sm:p-5"
       >
-        {/* Toggle Buttons */}
-        <div className="flex justify-center mb-5 flex-wrap gap-3">
+        <div className="mb-4 flex flex-wrap gap-2" aria-label="Stay duration">
           <button
             type="button"
             onClick={() => setMode("full")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold text-sm transition-all ${
-              mode === "full"
-                ? "bg-gray-900 text-white shadow"
-                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-            }`}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${mode === "full" ? "bg-[#4b2116] text-white shadow-sm" : "bg-[#f4eadc] text-[#634d41] hover:bg-[#eadbc9]"}`}
           >
-            <Moon className="w-4 h-4" />
-            Full-Day Stay
+            <Moon className="h-4 w-4" /> Full-day stay
           </button>
           <button
             type="button"
             onClick={() => setMode("hourly")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full font-semibold text-sm transition-all ${
-              mode === "hourly"
-                ? "bg-gray-900 text-white shadow"
-                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-            }`}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${mode === "hourly" ? "bg-[#4b2116] text-white shadow-sm" : "bg-[#f4eadc] text-[#634d41] hover:bg-[#eadbc9]"}`}
           >
-            <Zap className="w-4 h-4" />
-            Hourly Stay
+            <Zap className="h-4 w-4" /> Hourly stay
           </button>
         </div>
 
-        {/* Search Fields */}
-        <div className="border border-gray-200 rounded-2xl shadow-sm bg-white flex flex-col md:flex-row items-stretch justify-between p-4 md:p-5 gap-4 relative min-h-[120px] md:min-h-[110px]">
-          {/* Where */}
-          <div className="flex flex-col flex-1 w-full md:border-r border-gray-200 md:pr-4">
-            <label className="text-xs text-gray-500 mb-1">Where?</label>
-            <select
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              className="text-lg font-semibold text-gray-800 bg-transparent focus:outline-none text-center"
-            >
-              <option>Ayodhya</option>
-              <option>Lucknow</option>
-              <option>Varanasi</option>
-            </select>
-          </div>
+        <div className="grid gap-2 rounded-2xl border border-[#e4d6c7] bg-white p-2 lg:grid-cols-[1.1fr_1.3fr_1.5fr_auto] lg:items-stretch">
+          <label className="group flex min-h-[74px] cursor-pointer items-center gap-3 rounded-xl px-3 transition hover:bg-[#fff7ee] lg:border-r lg:border-[#eee2d5]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f7ebdf] text-[#a54528]">
+              <MapPin className="h-4 w-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[0.68rem] font-bold uppercase tracking-[0.13em] text-[#8b7567]">
+                Destination
+              </span>
+              <select
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+                className="mt-1 w-full cursor-pointer appearance-none bg-transparent text-base font-bold text-[#30231d]"
+              >
+                <option>Ayodhya</option>
+                <option>Lucknow</option>
+                <option>Varanasi</option>
+                <option>Mathura</option>
+                <option>Vrindavan</option>
+              </select>
+            </span>
+          </label>
 
-          {/* When */}
-          <div className="flex flex-col flex-1 w-full md:border-r border-gray-200 md:px-4 relative z-50">
-            <label className="text-xs text-gray-500">When?</label>
+          <div className="relative flex min-h-[74px] items-center gap-3 rounded-xl px-3 transition hover:bg-[#fff7ee] lg:border-r lg:border-[#eee2d5]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f7ebdf] text-[#a54528]">
+              <CalendarDays className="h-4 w-4" />
+            </span>
             <button
               type="button"
-              onClick={() => setShowCalendar(!showCalendar)}
-              className="text-lg font-semibold text-gray-800 text-center truncate focus:outline-none hover:text-gray-900"
+              onClick={() => setShowCalendar((visible) => !visible)}
+              className="min-w-0 text-left"
             >
-              {mode === "hourly"
-                ? format(dateRange[0].startDate, "dd MMM yy")
-                : `${format(dateRange[0].startDate, "dd MMM yy")} - ${format(
-                    dateRange[0].endDate,
-                    "dd MMM yy"
-                  )}`}
+              <span className="block text-[0.68rem] font-bold uppercase tracking-[0.13em] text-[#8b7567]">
+                When
+              </span>
+              <span className="mt-1 block truncate text-base font-bold text-[#30231d]">
+                {mode === "hourly"
+                  ? format(dateRange[0].startDate, "EEE, dd MMM")
+                  : `${format(dateRange[0].startDate, "dd MMM")} – ${format(dateRange[0].endDate, "dd MMM")}`}
+              </span>
             </button>
+            {/* {showCalendar && (
+              <div className="absolute left-0 top-full z-30 mt-3 hidden w-[620px] overflow-hidden rounded-2xl border border-[#e4d6c7] bg-white shadow-2xl lg:block">
+                {calendar}
+              </div>
+            )} */}
           </div>
 
-          {/* Adults / Children (Full Day) */}
-          {mode === "full" && (
-            <>
-              <div className="flex flex-col flex-1 items-center justify-center w-full md:border-r border-gray-200 mt-[-13px]">
-                <label className="text-xs text-gray-500">Adults</label>
-                <div className="flex items-center justify-center border rounded-md px-3 h-[38px] bg-white">
-                  <button
-                    type="button"
-                    onClick={() => setAdults(Math.max(1, adults - 1))}
-                    className="p-1 text-gray-600 hover:text-black"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="text-base font-semibold text-gray-800 w-6 text-center">
-                    {adults}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setAdults(adults + 1)}
-                    className="p-1 text-gray-600 hover:text-black"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
+          {mode === "full" ? (
+            <div className="grid min-h-[74px] grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-xl px-3 lg:border-r lg:border-[#eee2d5]">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#f7ebdf] text-[#a54528]">
+                <Users className="h-4 w-4" />
+              </span>
+              <div className="grid min-w-0 grid-cols-2 gap-3">
+                <GuestStepper
+                  label="Guests"
+                  value={adults}
+                  minimum={1}
+                  onDecrease={() =>
+                    setAdults((value) => Math.max(1, value - 1))
+                  }
+                  onIncrease={() => setAdults((value) => value + 1)}
+                />
+                <div className="border-l border-[#eadfd3] pl-3">
+                  <GuestStepper
+                    label="Children"
+                    value={children}
+                    minimum={0}
+                    onDecrease={() =>
+                      setChildren((value) => Math.max(0, value - 1))
+                    }
+                    onIncrease={() => setChildren((value) => value + 1)}
+                  />
                 </div>
               </div>
-
-              <div className="flex flex-col flex-1 items-center justify-center w-full md:border-r border-gray-200 mt-[-13px]">
-                <label className="text-xs text-gray-500">Children</label>
-                <div className="flex items-center justify-center border rounded-md px-3 h-[38px]  bg-white">
-                  <button
-                    type="button"
-                    onClick={() => setChildren(Math.max(0, children - 1))}
-                    className="p-1 text-gray-600 hover:text-black"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                  <span className="text-base font-semibold text-gray-800 w-6 text-center">
-                    {children}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setChildren(children + 1)}
-                    className="p-1 text-gray-600 hover:text-black"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Hourly Mode */}
-          {mode === "hourly" && (
-            <>
-              <div className="flex flex-col flex-1 w-full md:border-r border-gray-200 md:px-4">
-                <label className="text-xs text-gray-500 mb-1">Check-In Time</label>
+            </div>
+          ) : (
+            <div className="grid min-h-[74px] grid-cols-2 items-center gap-3 rounded-xl px-3 lg:border-r lg:border-[#eee2d5]">
+              <label>
+                <span className="block text-[0.68rem] font-bold uppercase tracking-[0.13em] text-[#8b7567]">
+                  Check-in
+                </span>
                 <select
                   value={checkInTime}
-                  onChange={(e) => setCheckInTime(e.target.value)}
-                  className="text-lg font-semibold text-gray-800 bg-transparent focus:outline-none text-center"
+                  onChange={(event) => setCheckInTime(event.target.value)}
+                  className="mt-1 w-full appearance-none bg-transparent text-sm font-bold text-[#30231d]"
                 >
-                  {timeOptions.map((t) => (
-                    <option key={t}>{t}</option>
+                  {timeOptions.map((time) => (
+                    <option key={time}>{time}</option>
                   ))}
                 </select>
-              </div>
-
-              <div className="flex flex-col flex-1 w-full md:border-r border-gray-200 md:px-4">
-                <label className="text-xs text-gray-500 mb-1">Duration (Hours)</label>
+              </label>
+              <label className="border-l border-[#eadfd3] pl-3">
+                <span className="flex items-center gap-1 text-[0.68rem] font-bold uppercase tracking-[0.13em] text-[#8b7567]">
+                  <Clock3 className="h-3 w-3" /> Duration
+                </span>
                 <select
                   value={hours}
-                  onChange={(e) => setHours(Number(e.target.value))}
-                  className="text-lg font-semibold text-gray-800 bg-transparent focus:outline-none text-center"
+                  onChange={(event) => setHours(Number(event.target.value))}
+                  className="mt-1 w-full appearance-none bg-transparent text-sm font-bold text-[#30231d]"
                 >
-                  {[...Array(8)].map((_, i) => {
-                    const val = i + 3;
-                    return (
-                      <option key={val} value={val}>
-                        {val} Hour{val > 1 ? "s" : ""}
+                  {Array.from({ length: 8 }, (_, index) => index + 3).map(
+                    (duration) => (
+                      <option key={duration} value={duration}>
+                        {duration} hours
                       </option>
-                    );
-                  })}
+                    ),
+                  )}
                 </select>
-              </div>
-            </>
+              </label>
+            </div>
           )}
 
-          {/* Search Button */}
-          <div className="flex justify-center md:justify-end w-full md:w-auto pt-2 md:pt-0">
+          <div className="flex items-center p-1">
             <button
               type="submit"
-              className="w-full md:w-auto bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded-xl px-8 py-3 shadow-md whitespace-nowrap transition-transform hover:scale-[1.03] cursor-pointer"
+              className="awadh-button min-h-[58px] w-full px-6 text-sm lg:w-auto"
             >
-              <div className="flex items-center justify-center gap-2">
-                <Search className="w-4 h-4" />
-                Search
-              </div>
+              <Search className="h-4 w-4" /> Search stays
             </button>
           </div>
         </div>
       </form>
 
-      {/* 📅 Calendar Overlay (MOBILE) */}
-      {showCalendar && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[1000] md:hidden">
-          <div className="bg-white rounded-2xl shadow-xl p-3 w-[95%] max-h-[90vh] overflow-y-auto">
-            <DateRange
-              ranges={dateRange}
-              onChange={(item) => setDateRange([item.selection])}
-              moveRangeOnFirstSelection={false}
-              minDate={new Date()}
-              rangeColors={["#1f2937"]}
-            />
-            <div className="flex justify-end mt-2">
-              <button
-                onClick={() => setShowCalendar(false)}
-                type="button"
-                className="px-4 py-2 bg-gray-800 text-white text-sm rounded-lg"
-              >
-                Done
-              </button>
+      {/* {showCalendar && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 p-4 lg:hidden">
+          <div className="max-h-[90vh] w-full max-w-md overflow-auto rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#eadfd3] px-4 py-3">
+              <p className="font-display text-xl font-semibold text-[#30231d]">Choose your dates</p>
+              <button type="button" onClick={() => setShowCalendar(false)} className="text-sm font-bold text-[#a54528]">Close</button>
             </div>
+            {calendar}
           </div>
         </div>
-      )}
-
-      {/* 📅 Desktop Inline Calendar */}
+      )} */}
       {showCalendar && (
-        <div className="hidden md:block absolute mt-2 z-50 bg-white shadow-xl rounded-xl border p-3">
-          <DateRange
-            ranges={dateRange}
-            onChange={(item) => setDateRange([item.selection])}
-            moveRangeOnFirstSelection={false}
-            minDate={new Date()}
-            rangeColors={["#1f2937"]}
-          />
-          <div className="flex justify-end mt-2">
-            <button
-              onClick={() => setShowCalendar(false)}
-              type="button"
-              className="px-4 py-1 bg-gray-700 hover:bg-gray-800 text-white text-sm rounded-lg"
-            >
-              Done
-            </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-3 sm:p-6">
+          <div className="max-h-[90dvh] w-full max-w-[680px] overflow-auto rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#eadfd3] px-4 py-3">
+              <p className="font-display text-xl font-semibold text-[#30231d]">
+                Choose your dates
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setShowCalendar(false)}
+                className="text-sm font-bold text-[#a54528]"
+              >
+                Close
+              </button>
+            </div>
+
+            {calendar}
           </div>
         </div>
       )}

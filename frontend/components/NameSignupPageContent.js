@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
+import AuthShell from '@/components/AuthShell';
 
 export default function NameSignupPage() {
   const [fullName, setFullName] = useState('');
@@ -16,8 +18,11 @@ export default function NameSignupPage() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/save-name`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name: fullName }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem('signupToken')}`,
+        },
+        body: JSON.stringify({ name: fullName }),
       });
 
       const data = await res.json();
@@ -37,6 +42,22 @@ export default function NameSignupPage() {
   }
 
   return (
+    <>
+      <AuthShell
+        step={2}
+        title="What should we call you?"
+        description="Use the name you’d like your hosts and booking confirmations to show."
+        footer={<>Prefer to sign in? <Link href="/login" className="auth-link">Go to login</Link></>}
+      >
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="signup-name">Full name</label>
+            <input id="signup-name" type="text" autoComplete="name" placeholder="Your full name" value={fullName} onChange={(event) => setFullName(event.target.value)} required className="auth-input" />
+          </div>
+          <button type="submit" disabled={loading} className="awadh-button auth-submit">{loading ? 'Saving…' : 'Continue'}</button>
+        </form>
+      </AuthShell>
+      {false && (
     <div
       className="flex-1 flex items-center justify-center bg-cover bg-center relative h-screen"
       style={{ backgroundImage: "url('/bed.jpg')" }}
@@ -74,5 +95,7 @@ export default function NameSignupPage() {
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 }

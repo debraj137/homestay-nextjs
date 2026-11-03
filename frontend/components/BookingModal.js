@@ -83,15 +83,15 @@ export default function BookingModal({ room, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-4 relative
-                ">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#241b17]/60 p-4 backdrop-blur-sm">
+      <div className="relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-[1.5rem] border border-[#eadfd3] bg-[#fffdfa] p-6 shadow-2xl">
         {/* ❌ Close Button */}
-        <button onClick={onClose} className="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
+        <button onClick={onClose} className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full bg-[#f4eadc] text-[#735f52] hover:text-[#a54528]" aria-label="Close booking details">
           ✕
         </button>
 
-        <h2 className="text-xl font-bold mb-4">
+        <p className="eyebrow pr-8">Choose your stay</p>
+        <h2 className="font-display mb-6 mt-2 pr-8 text-2xl font-semibold text-[#30231d]">
           Book {room.title} ({bookingType === 'hourly' ? 'Hourly Stay' : 'Full-Day Stay'})
         </h2>
 
@@ -100,23 +100,23 @@ export default function BookingModal({ room, onClose }) {
           <>
             {/* Date */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Select Date</label>
+              <label className="mb-1 block text-sm font-bold text-[#4a3a30]">Select date</label>
               <input
                 type="date"
                 value={format(dateRange[0].startDate, 'yyyy-MM-dd')}
                 onChange={(e) =>
                   setDateRange([{ ...dateRange[0], startDate: new Date(e.target.value) }])
                 }
-                className="w-full border px-3 py-2 rounded text-gray-700"
+                className="w-full rounded-xl border border-[#ddcbbb] bg-white px-3 py-2.5 text-sm text-[#30231d]"
                 min={format(new Date(), 'yyyy-MM-dd')}
               />
             </div>
 
             {/* Time */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Check-In Time</label>
+              <label className="mb-1 block text-sm font-bold text-[#4a3a30]">Check-in time</label>
               <select
-                className="w-full border px-3 py-2 rounded text-gray-700"
+                className="w-full rounded-xl border border-[#ddcbbb] bg-white px-3 py-2.5 text-sm text-[#30231d]"
                 value={checkInTime}
                 onChange={(e) => setCheckInTime(e.target.value)}
               >
@@ -132,9 +132,9 @@ export default function BookingModal({ room, onClose }) {
 
             {/* Duration (Editable now ✅) */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Duration (hours)</label>
+              <label className="mb-1 block text-sm font-bold text-[#4a3a30]">Duration (hours)</label>
               <select
-                className="w-full border px-3 py-2 rounded text-gray-700"
+                className="w-full rounded-xl border border-[#ddcbbb] bg-white px-3 py-2.5 text-sm text-[#30231d]"
                 value={hours}
                 onChange={(e) => setHours(Number(e.target.value))}
               >
@@ -152,11 +152,11 @@ export default function BookingModal({ room, onClose }) {
         ) : (
           // Full-day mode
           <div className="mb-4 relative" ref={calendarRef}>
-            <label className="block text-sm font-medium mb-1">Dates</label>
+            <label className="mb-1 block text-sm font-bold text-[#4a3a30]">Dates</label>
             <button
               type="button"
               onClick={() => setShowCalendar(!showCalendar)}
-              className="w-full px-3 py-2 border rounded text-left bg-gray-100"
+              className="w-full rounded-xl border border-[#ddcbbb] bg-[#fff8f1] px-3 py-2.5 text-left text-sm font-semibold text-[#30231d]"
             >
               {`${format(dateRange[0].startDate, 'dd/MM/yyyy')} → ${format(
                 dateRange[0].endDate,
@@ -165,7 +165,7 @@ export default function BookingModal({ room, onClose }) {
             </button>
             {showCalendar && (
               <div className="mt-4 w-full">
-                <div className="bg-white shadow-lg rounded w-full sm:w-[340px] mx-auto flex flex-col">
+                <div className="mx-auto flex w-full flex-col overflow-hidden rounded-2xl border border-[#eadfd3] bg-white shadow-lg sm:w-[340px]">
                   <div className="px-2">
                     <DateRange
                       ranges={dateRange}
@@ -179,10 +179,10 @@ export default function BookingModal({ room, onClose }) {
                     />
                   </div>
 
-                  <div className="sticky bottom-0 bg-white p-2 text-right border-t">
+                  <div className="sticky bottom-0 border-t border-[#eadfd3] bg-white p-2 text-right">
                     <button
                       onClick={() => setShowCalendar(false)}
-                      className="bg-gray-700 text-white px-4 py-1 rounded hover:bg-gray-800 cursor-pointer"
+                      className="awadh-button px-4 py-2 text-sm"
                     >
                       Done
                     </button>
@@ -197,8 +197,8 @@ export default function BookingModal({ room, onClose }) {
         <div className="flex gap-2 mb-4">
           {/* Adults */}
           <div className="flex flex-col w-1/2">
-            <label className="text-xs font-semibold text-gray-600 mb-1">Adults</label>
-            <div className="flex items-center justify-between border rounded px-2 h-[44px]">
+            <label className="mb-1 text-xs font-bold uppercase tracking-[.12em] text-[#8b7567]">Adults</label>
+            <div className="flex h-[44px] items-center justify-between rounded-xl border border-[#ddcbbb] bg-white px-2">
               <button type="button" onClick={() => setAdults(Math.max(1, adults - 1))}>
                 <Minus className="h-4 w-4" />
               </button>
@@ -211,8 +211,8 @@ export default function BookingModal({ room, onClose }) {
 
           {/* Children */}
           <div className="flex flex-col w-1/2">
-            <label className="text-xs font-semibold text-gray-600 mb-1">Children</label>
-            <div className="flex items-center justify-between border rounded px-2 h-[44px]">
+            <label className="mb-1 text-xs font-bold uppercase tracking-[.12em] text-[#8b7567]">Children</label>
+            <div className="flex h-[44px] items-center justify-between rounded-xl border border-[#ddcbbb] bg-white px-2">
               <button type="button" onClick={() => setChildren(Math.max(0, children - 1))}>
                 <Minus className="h-4 w-4" />
               </button>
@@ -225,16 +225,13 @@ export default function BookingModal({ room, onClose }) {
         </div>
 
         {/* Error Message */}
-        {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+        {error && <p className="mb-4 text-sm text-[#a54528]">{error}</p>}
 
         {/* Proceed Button */}
         <button
           onClick={handleCheckout}
           disabled={!!error}
-          className={`w-full py-2 rounded-lg font-semibold ${error
-            ? 'bg-gray-400 text-white cursor-not-allowed'
-            : 'bg-gray-700 hover:bg-gray-800 text-white cursor-pointer'
-            }`}
+          className="awadh-button w-full px-5 py-3 text-base"
         >
           Proceed To Checkout
         </button>

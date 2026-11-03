@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 
-module.exports = function (req, res, next) {
+function authenticate(req, res, next) {
+  console.log('Auth middleware:', req.method, req.originalUrl);
   const token = req.header("Authorization")?.split(" ")[1]; // Expecting "Bearer <token>"
 
   if (!token) {
@@ -9,9 +10,46 @@ module.exports = function (req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // will contain user id and email
+    req.user = decoded;
     next();
   } catch (err) {
     res.status(401).json({ message: "Token is not valid" });
   }
-};
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "You do not have permission to perform this action" });
+    }
+
+    next();
+  };
+}
+
+function requirePurpose(purpose) {
+  return (req, res, next) => {
+    if (!req.user || req.user.purpose !== purpose) {
+      return res.status(403).json({ message: "This token cannot be used for this action" });
+    }
+
+    next();
+  };
+}
+
+function optionalAuth(req, res, next) {
+  const token = req.header("Authorization")?.split(" ")[1];
+  if (!token) return next();
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (_) {
+    // A public resource should remain readable without a valid optional token.
+  }
+  next();
+}
+
+module.exports = authenticate;
+module.exports.requireRole = requireRole;
+module.exports.requirePurpose = requirePurpose;
+module.exports.optionalAuth = optionalAuth;

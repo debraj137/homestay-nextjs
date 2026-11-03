@@ -9,7 +9,9 @@ export default function PendingOwnersPage() {
   useEffect(() => {
     async function fetchOwners() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/pending-owners`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/admin/pending-owners`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
         const data = await res.json();
         setOwners(data);
       } catch (err) {

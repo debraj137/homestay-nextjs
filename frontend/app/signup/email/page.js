@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import AuthShell from '@/components/AuthShell';
 
 export default function EmailSignupPage() {
   const [email, setEmail] = useState('');
@@ -35,6 +37,25 @@ export default function EmailSignupPage() {
   }
 
   return (
+    <>
+      <AuthShell
+        step={1}
+        title="Start your journey"
+        description="Enter your email and we’ll send a short verification code to keep your account secure."
+        footer={<>Already have an account? <Link href="/login" className="auth-link">Sign in</Link></>}
+      >
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="signup-email">Email address</label>
+            <input id="signup-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required className="auth-input" />
+          </div>
+          <button type="submit" disabled={loading} className="awadh-button auth-submit">
+            {loading ? 'Sending code…' : 'Continue with email'}
+          </button>
+          <p className="auth-helper text-center">By continuing, you agree to our <Link href="/terms-and-conditions" className="auth-link">Terms</Link> and <Link href="/privacy-policy" className="auth-link">Privacy Policy</Link>.</p>
+        </form>
+      </AuthShell>
+      {false && (
     <div
       className="flex-1 flex items-center justify-center bg-cover bg-center relative h-screen"
       style={{ backgroundImage: "url('/bed.jpg')" }}
@@ -91,6 +112,8 @@ export default function EmailSignupPage() {
           </p>
         </div>
       </div>
-    </div> 
+    </div>
+      )}
+    </>
   ); 
 }

@@ -5,7 +5,7 @@ const Booking = require('../models/Booking');
 // ✅ Get all rooms
 exports.listRooms = async (req, res) => {
   try {
-    const rooms = await Room.find();
+    const rooms = await Room.find({ isApproved: true, isAvailable: true });
     res.json(rooms);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -16,6 +16,9 @@ exports.listRooms = async (req, res) => {
 exports.getRoomsByOwner = async (req, res) => {
   try {
     const { ownerId } = req.params;
+    if (req.user.role !== 'admin' && req.user.id !== ownerId) {
+      return res.status(403).json({ message: 'You can only view your own properties' });
+    }
     const rooms = await Room.find({ ownerId }).sort({ createdAt: -1 });
     res.json(rooms);
   } catch (err) {
@@ -26,7 +29,12 @@ exports.getRoomsByOwner = async (req, res) => {
 // ✅ Create new room
 exports.createRoom = async (req, res) => {
   try {
-    const newRoom = new Room(req.body);
+    const roomData = { ...req.body };
+    // Owners cannot create a property under somebody else's account or approve it themselves.
+    roomData.ownerId = req.user.role === 'admin' && req.body.ownerId ? req.body.ownerId : req.user.id;
+    roomData.isApproved = false;
+    roomData.category = 'Normal';
+    const newRoom = new Room(roomData);
     await newRoom.save();
     res.status(201).json(newRoom);
   } catch (err) {
@@ -39,6 +47,11 @@ exports.getRoom = async (req, res) => {
   try {
     const room = await Room.findById(req.params.id);
     if (!room) return res.status(404).json({ message: 'Room not found' });
+
+    const isOwner = req.user && req.user.id === room.ownerId.toString();
+    if (!room.isApproved && req.user?.role !== 'admin' && !isOwner) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
 
     // Compute discounted price
     const discountedPrice =
@@ -55,8 +68,27 @@ exports.getRoom = async (req, res) => {
 // ✅ Update room
 exports.updateRoom = async (req, res) => {
   try {
-    const updated = await Room.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: 'Room not found' });
+    const room = await Room.findById(req.params.id);
+    if (!room) return res.status(404).json({ message: 'Room not found' });
+
+    const isAdmin = req.user.role === 'admin';
+    if (!isAdmin && room.ownerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'You can only update your own properties' });
+    }
+
+    const allowedFields = [
+      'title', 'description', 'location', 'price', 'discount', 'images', 'amenities',
+      'maximumAllowedAdult', 'maximumAllowedChild', 'isAvailable'
+    ];
+    const update = {};
+    for (const field of allowedFields) {
+      if (typeof req.body[field] !== 'undefined') update[field] = req.body[field];
+    }
+
+    const updated = await Room.findByIdAndUpdate(req.params.id, update, {
+      new: true,
+      runValidators: true,
+    });
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
@@ -239,7 +271,7 @@ exports.filterRooms = async (req, res) => {
 exports.getRoomsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
-    const rooms = await Room.find({ category, isApproved: true }).lean();
+    const rooms = await Room.find({ category, isApproved: true, isAvailable: true }).lean();
 
     const enriched = rooms.map((room) => ({
       ...room,
@@ -258,6 +290,9 @@ exports.getRoomsByCategory = async (req, res) => {
 exports.getApprovedRoomsByOwner = async (req, res) => {
   try {
     const { ownerId } = req.params;
+    if (req.user.role !== 'admin' && req.user.id !== ownerId) {
+      return res.status(403).json({ message: 'You can only view your own properties' });
+    }
     const rooms = await Room.find({ ownerId, isApproved: true }).sort({ createdAt: -1 });
     res.json(rooms);
   } catch (err) {

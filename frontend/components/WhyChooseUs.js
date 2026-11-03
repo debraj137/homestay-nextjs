@@ -1,43 +1,53 @@
 'use client';
-import { Search, Star, Users } from 'lucide-react';
+
+import { BadgeCheck, Headphones, ShieldCheck, Sparkles } from 'lucide-react';
+
+const features = [
+  {
+    icon: BadgeCheck,
+    title: 'Handpicked for comfort',
+    description: 'A considered collection of stays for pilgrimages, family visits and quiet getaways.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Stay your way',
+    description: 'Choose a full-day stay or book only the hours that fit the rhythm of your journey.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Clarity from search to stay',
+    description: 'See the essentials—location, amenities and price—before you commit.',
+  },
+  {
+    icon: Headphones,
+    title: 'Here when plans change',
+    description: 'Reach a real support team when you need a hand with your booking.',
+  },
+];
 
 export default function WhyChooseUs() {
-  const features = [
-    {
-      icon: <Search className="h-6 w-6 text-blue-600" />,
-      title: 'Easy Booking',
-      desc: 'Simple and secure booking process with instant confirmation',
-      bg: 'bg-blue-100',
-    },
-    {
-      icon: <Star className="h-6 w-6 text-green-600" />,
-      title: 'Premium Quality',
-      desc: 'Hand-selected luxury hotels with exceptional service standards',
-      bg: 'bg-green-100',
-    },
-    {
-      icon: <Users className="h-6 w-6 text-purple-600" />,
-      title: '24/7 Support',
-      desc: 'Round-the-clock customer support for all your travel needs',
-      bg: 'bg-purple-100',
-    },
-  ];
-
   return (
-    <section className="py-16 bg-white">
-      <div className="max-w-6xl mx-auto px-6 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12">Why Choose Us?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {features.map((f, idx) => (
-            <div key={idx} className="flex flex-col items-center text-center">
-              <div
-                className={`flex items-center justify-center w-16 h-16 rounded-full ${f.bg} mb-4`}
-              >
-                {f.icon}
-              </div>
-              <h3 className="text-lg font-bold text-gray-900 tracking-tight mb-2">{f.title}</h3>
-              <p className="text-gray-600 text-sm">{f.desc}</p>
-            </div>
+    <section className="bg-[#fffaf4] py-20 sm:py-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-[0.85fr_2.15fr] lg:items-end">
+          <div>
+            <p className="eyebrow">The Awadh way</p>
+            <h2 className="font-display mt-3 text-4xl font-semibold leading-tight text-[#30231d] sm:text-5xl">Made for meaningful journeys.</h2>
+          </div>
+          <p className="max-w-2xl text-base leading-7 text-[#6e625b] sm:text-lg">
+            Good travel feels easy. We keep the details clear, the choices thoughtful and the welcome close at hand.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-px overflow-hidden rounded-[1.5rem] border border-[#e8dbcd] bg-[#e8dbcd] sm:grid-cols-2 lg:grid-cols-4">
+          {features.map(({ icon: Icon, title, description }) => (
+            <article key={title} className="bg-[#fffdf9] p-7 sm:p-8">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-[#f4eadc] text-[#a54528]">
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <h3 className="mt-6 text-lg font-bold text-[#30231d]">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-[#706158]">{description}</p>
+            </article>
           ))}
         </div>
       </div>

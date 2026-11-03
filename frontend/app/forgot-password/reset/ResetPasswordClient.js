@@ -13,13 +13,17 @@ export default function ResetPasswordPage() {
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/forgot-password/reset`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, newPassword: password }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sessionStorage.getItem('passwordResetToken')}`,
+      },
+      body: JSON.stringify({ newPassword: password }),
     });
 
     const data = await res.json();
     if (!res.ok) return setMsg(data.message);
 
+    sessionStorage.removeItem('passwordResetToken');
     router.push('/login');
   }
 

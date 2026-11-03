@@ -67,26 +67,26 @@ export default function CouponInput({ subtotal = 0, roomId, onApply, disabled = 
   }
 
   return (
-    <div className="mt-4">
-      <label className="block text-sm font-medium text-gray-700 mb-2">Have a coupon?</label>
-      <div className="flex flex-col sm:flex-row gap-2 w-full">
+    <div className="mt-5">
+      <label className="block text-sm font-bold text-[#4a3a30] mb-2">Have a coupon?</label>
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           value={code}
           onChange={(e) => setCode(e.target.value)}
           placeholder="Enter coupon code"
-          className="flex-1 border px-3 py-2 rounded"
+          className="min-w-0 flex-1 rounded-xl border border-[#ddcbbb] bg-[#fffdfa] px-3 py-2.5 text-sm text-[#30231d] placeholder:text-[#a38f81]"
           disabled={applied}
         />
         <button
           onClick={applyCoupon}
           disabled={loading || applied}
-          className={`px-4 py-2 rounded font-medium ${loading || applied ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-800 text-white'}`}
+          className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${loading || applied ? 'cursor-not-allowed bg-[#c4b3a4] text-white' : 'bg-[#4b2116] text-white hover:bg-[#71301f]'}`}
         >
           {loading ? 'Applying...' : applied ? 'Applied' : 'Apply'}
         </button>
       </div>
       {message && (
-        <div className={`mt-2 text-sm ${message.type === 'error' ? 'text-red-600' : message.type === 'success' ? 'text-green-700' : 'text-gray-700'}`}>
+        <div className={`mt-2 text-sm ${message.type === 'error' ? 'text-[#a54528]' : message.type === 'success' ? 'text-[#39704d]' : 'text-[#67574d]'}`}>
           {message.text}
         </div>
       )}

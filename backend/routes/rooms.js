@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const roomsController = require('../controllers/roomsController');
+const auth = require('../middleware/authMiddleware');
+const { requireRole, optionalAuth } = auth;
 
 
 router.get('/', roomsController.listRooms);
-router.post('/', roomsController.createRoom);
+router.post('/', auth, requireRole('owner', 'admin'), roomsController.createRoom);
 router.get('/search', roomsController.searchRooms);
 router.get('/amenities', roomsController.getDistinctAmenities);
 // ✅ new filter route
@@ -13,10 +15,10 @@ router.post('/filter', roomsController.filterRooms);
 router.get('/category/:category', roomsController.getRoomsByCategory);
 
 // get rooms by owner
-router.get('/owner/:ownerId', roomsController.getRoomsByOwner);
-router.get('/owner/:ownerId/approved', roomsController.getApprovedRoomsByOwner);
-router.get('/:id', roomsController.getRoom);
-router.put('/:id', roomsController.updateRoom);
+router.get('/owner/:ownerId', auth, requireRole('owner', 'admin'), roomsController.getRoomsByOwner);
+router.get('/owner/:ownerId/approved', auth, requireRole('owner', 'admin'), roomsController.getApprovedRoomsByOwner);
+router.get('/:id', optionalAuth, roomsController.getRoom);
+router.put('/:id', auth, requireRole('owner', 'admin'), roomsController.updateRoom);
 
 
 // ✅ Route for approved rooms by owner

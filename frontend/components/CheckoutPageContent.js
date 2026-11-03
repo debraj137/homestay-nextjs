@@ -1,17 +1,35 @@
 'use client';
+
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, CheckCircle2, Clock3, CreditCard, ShieldCheck, UserRound, WalletCards } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 import CouponInput from '@/components/CouponInput';
 import BookingSuccessModal from '@/components/BookingSuccessModal';
 import { API_BASE } from '@/lib/api';
 
+function calculatePrices({ room, bookingType, hours, checkInDate, checkOutDate, couponDiscountAmount }) {
+  let actual;
+  if (bookingType === 'hourly' && hours) {
+    actual = hours <= 3 ? room.price / 4 : room.price / 4 + (room.price / 12) * (hours - 3);
+  } else {
+    const difference = checkInDate && checkOutDate
+      ? (new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24)
+      : 1;
+    actual = room.price * Math.max(1, difference || 1);
+  }
+
+  actual = Math.round(actual || 0);
+  const roomDiscountSaving = Number(room.discount) > 0 ? Math.round((actual * Number(room.discount)) / 100) : 0;
+  const finalPrice = couponDiscountAmount > 0 ? actual - couponDiscountAmount : actual - roomDiscountSaving;
+  return { actualPrice: actual, roomDiscountSaving, finalPrice: Math.max(0, Math.round(finalPrice)) };
+}
+
 export default function CheckoutPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-
   const bookingType = searchParams.get('bookingType') || 'full';
   const roomId = searchParams.get('roomId');
   const checkInDate = searchParams.get('checkInDate');
@@ -25,30 +43,29 @@ export default function CheckoutPageContent() {
   const [loadingRoom, setLoadingRoom] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [bookingLoading, setBookingLoading] = useState(false);
-
-  // coupon state
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponDiscountAmount, setCouponDiscountAmount] = useState(0);
   const [applyDisabled, setApplyDisabled] = useState(false);
-
-  // booking result modal state
   const [bookingResult, setBookingResult] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login');
-  }, [user, authLoading, router]);
+  }, [authLoading, router, user]);
 
   useEffect(() => {
     async function fetchRoom() {
-      if (!roomId) return;
+      if (!roomId) {
+        setLoadingRoom(false);
+        return;
+      }
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/rooms/${roomId}`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed to fetch room');
+        const response = await fetch(`${API_BASE}/rooms/${roomId}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Failed to fetch room');
         setRoom(data);
-      } catch (err) {
-        toast.error(err.message || 'Failed to load room');
+      } catch (error) {
+        toast.error(error.message || 'Failed to load room');
       } finally {
         setLoadingRoom(false);
       }
@@ -56,136 +73,17 @@ export default function CheckoutPageContent() {
     fetchRoom();
   }, [roomId]);
 
-
-  function calculatePrices({
-    room,
-    bookingType,
-    hours,
-    checkInDate,
-    checkOutDate,
-    couponDiscountAmount,
-  }) {
-    let actual = 0;
-
-    // ACTUAL PRICE
-    if (bookingType === 'hourly' && hours) {
-      actual =
-        hours <= 3
-          ? room.price / 4
-          : room.price / 4 + (room.price / 12) * (hours - 3);
-      actual = Math.round(actual);
-    } else {
-      const nights = Math.max(
-        1,
-        (new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24)
-      );
-      actual = room.price * nights;
-    }
-
-    // ROOM DISCOUNT
-    const roomSaving =
-      room.discount > 0
-        ? Math.round((actual * room.discount) / 100)
-        : 0;
-
-    // FINAL PRICE RULE
-    const final =
-      couponDiscountAmount > 0
-        ? actual - couponDiscountAmount
-        : actual - roomSaving;
-
-    return {
-      actualPrice: actual,
-      roomDiscountSaving: roomSaving,
-      finalPrice: Math.max(0, Math.round(final)),
-    };
-  }
-
-  // ==========================
-  // FINAL PRICE CALCULATION (single source of truth)
-  // ==========================
   const { actualPrice, roomDiscountSaving, finalPrice } = useMemo(() => {
-    if (!room) {
-      return { actualPrice: 0, roomDiscountSaving: 0, finalPrice: 0 };
-    }
-
-    return calculatePrices({
-      room,
-      bookingType,
-      hours,
-      checkInDate,
-      checkOutDate,
-      couponDiscountAmount,
-    });
-  }, [
-    room,
-    bookingType,
-    hours,
-    checkInDate,
-    checkOutDate,
-    couponDiscountAmount,
-  ]);
-
-
-
-  const isCouponApplied = couponDiscountAmount > 0;
-  if (loadingRoom || authLoading) return <p className="text-center mt-10 text-gray-600">Loading...</p>;
-  if (!room) return <p className="text-center mt-10 text-red-600">Room not found.</p>;
-
-  // ==========================
-  // ✅ ACTUAL PRICE CALCULATION (HOURLY + FULL)
-  // ==========================
-
-  // const pricePerNight = Number(room.price);
-  // let actualPrice = 0;
-
-  // if (bookingType === 'hourly' && hours) {
-  //   // Hourly pricing based on ACTUAL price
-  //   if (hours <= 3) {
-  //     actualPrice = pricePerNight / 4;
-  //   } else {
-  //     actualPrice = pricePerNight / 4 + (pricePerNight / 12) * (hours - 3);
-  //   }
-  //   actualPrice = Math.round(actualPrice);
-  // } else {
-  //   // Full-day pricing
-  //   const nights = Math.max(
-  //     1,
-  //     (new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24)
-  //   );
-  //   actualPrice = pricePerNight * nights;
-  // }
-
-  // const roomDiscountPercent = Number(room.discount || 0);
-  // const roomDiscountAmount = Math.round(
-  //   (actualPrice * roomDiscountPercent) / 100
-  // );
-
-  // const couponSaving = Number(couponDiscountAmount || 0);
-  // const isCouponApplied = couponSaving > 0;
-
-  // const finalPrice = isCouponApplied
-  //   ? Math.max(actualPrice - couponSaving, 0)
-  //   : Math.max(actualPrice - roomDiscountAmount, 0);
-
+    if (!room) return { actualPrice: 0, roomDiscountSaving: 0, finalPrice: 0 };
+    return calculatePrices({ room, bookingType, hours, checkInDate, checkOutDate, couponDiscountAmount });
+  }, [bookingType, checkInDate, checkOutDate, couponDiscountAmount, hours, room]);
 
   async function handleBooking() {
+    if (!user || !room) return;
     setBookingLoading(true);
     try {
       const token = localStorage.getItem('token');
-
-      const {
-        actualPrice: bookingActual,
-        finalPrice: bookingFinal,
-      } = calculatePrices({
-        room,
-        bookingType,
-        hours,
-        checkInDate,
-        checkOutDate,
-        couponDiscountAmount,
-      });
-
+      const pricing = calculatePrices({ room, bookingType, hours, checkInDate, checkOutDate, couponDiscountAmount });
       const payload = {
         userId: user.id,
         roomId,
@@ -196,211 +94,110 @@ export default function CheckoutPageContent() {
         hours,
         numberOfAdult: adults,
         numberOfChild: children,
-        // send both original subtotal AND final total
-        subtotal: bookingActual,     // server should use this to compute coupon discount validation
-        totalPrice: bookingFinal,              // final amount to be charged/saved
+        subtotal: pricing.actualPrice,
+        totalPrice: pricing.finalPrice,
         mobileNumber: user.mobileNumber,
         status: 'confirmed',
-        couponCode: appliedCoupon?.code || undefined
+        couponCode: appliedCoupon?.code || undefined,
       };
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/bookings`, {
+      const response = await fetch(`${API_BASE}/bookings`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Booking failed');
-
-      // Store booking result and show modal (do NOT immediately navigate)
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Booking failed');
       setBookingResult(data);
       setShowBookingModal(true);
-
-      // Still show success toast
       toast.success('Booking confirmed!', { duration: 4000 });
-
-      // keep bookingLoading false so modal buttons enabled
-    } catch (err) {
-      toast.error(err.message || 'Booking failed', { duration: 5000 });
+    } catch (error) {
+      toast.error(error.message || 'Booking failed', { duration: 5000 });
     } finally {
       setBookingLoading(false);
     }
   }
 
-  // handler passed to CouponInput
   function onCouponApply(result) {
     if (result.success) {
       setAppliedCoupon({ ...result.coupon, code: result.code || result.coupon?.code });
       setCouponDiscountAmount(Number(result.discountAmount) || 0);
-      setApplyDisabled(true); // disable further apply
+      setApplyDisabled(true);
       toast.success('Coupon applied');
-    } else {
-      // remove applied coupon on failure
-      setAppliedCoupon(null);
-      setCouponDiscountAmount(0);
-      setApplyDisabled(false);
-      if (result.message) toast.error(result.message);
+      return;
     }
+    setAppliedCoupon(null);
+    setCouponDiscountAmount(0);
+    setApplyDisabled(false);
+    if (result.message) toast.error(result.message);
   }
 
-  // Actions in modal
-  function handleGoToBookings() {
-    setShowBookingModal(false);
-    router.push('/my-bookings');
-  }
+  if (loadingRoom || authLoading) return <div className="min-h-[50vh] bg-[#fffaf4] px-5 py-16"><div className="mx-auto h-80 max-w-6xl animate-pulse rounded-[2rem] bg-[#f1e6d9]" /></div>;
+  if (!room) return <div className="min-h-[50vh] bg-[#fffaf4] px-5 py-20 text-center text-[#7a3320]">Room not found.</div>;
 
-  function handleCloseModal() {
-    setShowBookingModal(false);
-    // optionally keep user on checkout page to do other actions
-  }
+  const isCouponApplied = couponDiscountAmount > 0;
+  const paymentOptions = [
+    ['card', 'Credit or debit card'],
+    ['upi', 'UPI (Google Pay, PhonePe, Paytm)'],
+    ['payAtHotel', 'Pay at hotel'],
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-10">
-      <h1 className="text-4xl font-bold text-gray-800 mb-10 text-center">Checkout</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Left Column - Booking Details */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 space-y-6">
-          <h2 className="text-2xl font-semibold text-[#7a3e1c] border-b pb-2">Booking Summary</h2>
-
-          <div className="space-y-3 text-gray-700">
-            <p><strong>Room:</strong> {room.title}</p>
-            <p><strong>Mode:</strong> {bookingType === 'hourly' ? 'Hourly Stay' : 'Full-Day Stay'}</p>
-            <p><strong>Check-In:</strong> {checkInDate} {checkInTime && `(${checkInTime})`}</p>
-            {bookingType === 'hourly' ? (
-              <p><strong>Duration:</strong> {hours} hours</p>
-            ) : (
-              <p><strong>Check-Out:</strong> {checkOutDate}</p>
-            )}
-            <p><strong>Guests:</strong> {adults} Adults, {children} Children</p>
-          </div>
-
-          {/* Price Card */}
-          <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200 rounded-xl p-4 mt-4 space-y-2">
-
-            {/* Actual Price (always shown) */}
-            <div className="flex justify-between text-sm text-gray-700">
-              <span>Actual Price</span>
-              <span>₹{actualPrice.toLocaleString('en-IN')}</span>
-            </div>
-
-            {/* Room Discount (ONLY when coupon NOT applied) */}
-            {!isCouponApplied && roomDiscountSaving > 0 && (
-              <div className="flex justify-between text-sm text-green-700">
-                <span>
-                  Room Discount ({room.discount}%)
-                </span>
-                <span>
-                  - ₹{roomDiscountSaving.toLocaleString('en-IN')}
-                </span>
-              </div>
-            )}
-
-            {/* Coupon Discount (ONLY when coupon applied) */}
-            {isCouponApplied && (
-              <div className="flex justify-between text-sm text-green-700">
-                <span>Coupon Discount</span>
-                <span>
-                  - ₹{couponDiscountAmount.toLocaleString('en-IN')}
-                </span>
-              </div>
-            )}
-
-            <hr className="border-amber-300 my-2" />
-
-            {/* Final Payable */}
-            <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-gray-800">
-                Final Payable
-              </span>
-              <span className="text-3xl font-bold text-gray-900">
-                ₹{finalPrice.toLocaleString('en-IN')}
-              </span>
-            </div>
-          </div>
-
-
-          {/* Coupon UI - pass disabled state so Apply button is disabled after apply */}
-          <CouponInput subtotal={actualPrice} roomId={roomId} onApply={onCouponApply} disabled={applyDisabled} />
-          <p className="text-xs text-gray-500 mt-2">
-            Coupon discounts are applied on the actual price, not on discounted price.
-          </p>
-
-        </div>
-
-        {/* Right Column - Payment & User Info */}
-        <div className="space-y-8">
-          {/* User Info */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <h2 className="text-2xl font-semibold text-[#7a3e1c] border-b pb-2 mb-4">Your Information</h2>
-            <div className="text-gray-700 space-y-2">
-              <p><strong>Name:</strong> {user?.name}</p>
-              <p><strong>Email:</strong> {user?.email}</p>
-              <p><strong>Mobile:</strong> {user?.mobileNumber}</p>
-            </div>
-          </div>
-
-          {/* Payment Section */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <h2 className="text-2xl font-semibold text-[#7a3e1c] border-b pb-2 mb-4">Select Payment Method</h2>
-
-            <div className="space-y-3">
-              {['card', 'upi', 'payAtHotel'].map((method) => (
-                <label
-                  key={method}
-                  className={`flex items-center justify-between border rounded-lg px-4 py-3 cursor-pointer transition-all ${paymentMethod === method
-                    ? 'border-gray-800 bg-gray-50'
-                    : 'border-gray-200 hover:bg-gray-50'
-                    }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value={method}
-                      checked={paymentMethod === method}
-                      onChange={() => setPaymentMethod(method)}
-                      className="accent-gray-800"
-                    />
-                    <span className="font-medium text-gray-800">
-                      {method === 'card'
-                        ? 'Credit / Debit Card'
-                        : method === 'upi'
-                          ? 'UPI (Google Pay, PhonePe, Paytm)'
-                          : 'Pay at Hotel'}
-                    </span>
-                  </div>
-                </label>
-              ))}
-            </div>
-
-            <button
-              onClick={handleBooking}
-              disabled={bookingLoading}
-              className={`w-full mt-6 py-3 rounded-lg font-semibold text-white text-lg transition-all ${bookingLoading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-gray-800 hover:bg-gray-900 shadow-md hover:shadow-lg cursor-pointer'
-                }`}
-            >
-              {bookingLoading ? 'Processing...' : 'Confirm Booking'}
-            </button>
+    <div className="min-h-[calc(100vh-72px)] bg-[#fffaf4] py-10 sm:py-14">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="eyebrow">One last step</p>
+          <h1 className="font-display mt-3 text-4xl font-semibold text-[#30231d] sm:text-5xl">Complete your stay.</h1>
+          <div className="mt-7 grid grid-cols-3 overflow-hidden rounded-full border border-[#e5d5c4] bg-white text-xs font-bold text-[#7a675b]">
+            <span className="border-r border-[#eadfd3] px-2 py-3"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-[#a54528]" />Choose</span>
+            <span className="border-r border-[#eadfd3] px-2 py-3"><CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-[#a54528]" />Details</span>
+            <span className="bg-[#f5e8dc] px-2 py-3 text-[#7b321f]">3. Confirm</span>
           </div>
         </div>
+
+        <div className="mt-10 grid gap-7 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,.75fr)] lg:items-start">
+          <div className="space-y-7">
+            <section className="surface-card rounded-[1.4rem] p-6 sm:p-8">
+              <div className="flex items-start justify-between gap-4 border-b border-[#eadfd3] pb-5">
+                <div><p className="eyebrow">Your selection</p><h2 className="font-display mt-2 text-3xl font-semibold text-[#30231d]">{room.title}</h2></div>
+                <span className="rounded-full bg-[#f4eadc] px-3 py-1.5 text-xs font-bold text-[#745f50]">{bookingType === 'hourly' ? 'Hourly stay' : 'Full-day stay'}</span>
+              </div>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="flex gap-3 rounded-2xl bg-[#f9f2e9] p-4"><CalendarDays className="h-5 w-5 shrink-0 text-[#a54528]" /><div><p className="text-xs font-bold uppercase tracking-[.12em] text-[#8b7567]">Check-in</p><p className="mt-1 text-sm font-bold text-[#372a23]">{checkInDate || 'Choose date'} {checkInTime && `· ${checkInTime}`}</p></div></div>
+                <div className="flex gap-3 rounded-2xl bg-[#f9f2e9] p-4">{bookingType === 'hourly' ? <Clock3 className="h-5 w-5 shrink-0 text-[#a54528]" /> : <CalendarDays className="h-5 w-5 shrink-0 text-[#a54528]" />}<div><p className="text-xs font-bold uppercase tracking-[.12em] text-[#8b7567]">{bookingType === 'hourly' ? 'Duration' : 'Check-out'}</p><p className="mt-1 text-sm font-bold text-[#372a23]">{bookingType === 'hourly' ? `${hours || 0} hours` : checkOutDate || 'Choose date'}</p></div></div>
+                <div className="flex gap-3 rounded-2xl bg-[#f9f2e9] p-4 sm:col-span-2"><UserRound className="h-5 w-5 shrink-0 text-[#a54528]" /><div><p className="text-xs font-bold uppercase tracking-[.12em] text-[#8b7567]">Guests</p><p className="mt-1 text-sm font-bold text-[#372a23]">{adults} adult{adults !== 1 ? 's' : ''}{children ? ` · ${children} child${children !== 1 ? 'ren' : ''}` : ''}</p></div></div>
+              </div>
+            </section>
+
+            <section className="surface-card rounded-[1.4rem] p-6 sm:p-8">
+              <div className="flex items-center gap-3 border-b border-[#eadfd3] pb-5"><UserRound className="h-5 w-5 text-[#a54528]" /><h2 className="font-display text-2xl font-semibold text-[#30231d]">Your information</h2></div>
+              <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2"><p><span className="block text-xs font-bold uppercase tracking-[.11em] text-[#8b7567]">Name</span><span className="mt-1 block font-semibold text-[#3b2c24]">{user?.name}</span></p><p><span className="block text-xs font-bold uppercase tracking-[.11em] text-[#8b7567]">Mobile</span><span className="mt-1 block font-semibold text-[#3b2c24]">{user?.mobileNumber}</span></p><p className="sm:col-span-2"><span className="block text-xs font-bold uppercase tracking-[.11em] text-[#8b7567]">Email</span><span className="mt-1 block font-semibold text-[#3b2c24]">{user?.email}</span></p></div>
+            </section>
+
+            <section className="surface-card rounded-[1.4rem] p-6 sm:p-8">
+              <div className="flex items-center gap-3 border-b border-[#eadfd3] pb-5"><WalletCards className="h-5 w-5 text-[#a54528]" /><h2 className="font-display text-2xl font-semibold text-[#30231d]">Payment method</h2></div>
+              <div className="mt-5 space-y-3">
+                {paymentOptions.map(([method, label]) => <label key={method} className={`flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-4 transition ${paymentMethod === method ? 'border-[#a54528] bg-[#fff8f1] shadow-sm' : 'border-[#e5d8cb] bg-white hover:border-[#cda88e]'}`}><span className="flex items-center gap-3"><span className={`grid h-9 w-9 place-items-center rounded-full ${paymentMethod === method ? 'bg-[#f1ddc8] text-[#a54528]' : 'bg-[#f7f0e8] text-[#77665a]'}`}><CreditCard className="h-4 w-4" /></span><span className="text-sm font-bold text-[#3b2c24]">{label}</span></span><input type="radio" name="payment" value={method} checked={paymentMethod === method} onChange={() => setPaymentMethod(method)} className="h-4 w-4 accent-[#a54528]" /></label>)}
+              </div>
+            </section>
+          </div>
+
+          <aside className="surface-card rounded-[1.4rem] p-6 lg:sticky lg:top-24">
+            <p className="eyebrow">Price summary</p>
+            <div className="mt-5 space-y-3 text-sm text-[#5f5047]">
+              <div className="flex justify-between gap-4"><span>Stay subtotal</span><span className="font-semibold text-[#30231d]">₹{actualPrice.toLocaleString('en-IN')}</span></div>
+              {!isCouponApplied && roomDiscountSaving > 0 && <div className="flex justify-between gap-4 text-[#39704d]"><span>Stay discount ({room.discount}%)</span><span className="font-semibold">− ₹{roomDiscountSaving.toLocaleString('en-IN')}</span></div>}
+              {isCouponApplied && <div className="flex justify-between gap-4 text-[#39704d]"><span>Coupon discount</span><span className="font-semibold">− ₹{couponDiscountAmount.toLocaleString('en-IN')}</span></div>}
+            </div>
+            <div className="mt-5 border-y border-[#eadfd3] py-5"><div className="flex items-end justify-between gap-4"><span className="font-bold text-[#3c2d25]">Total payable</span><span className="text-3xl font-extrabold text-[#4b2116]">₹{finalPrice.toLocaleString('en-IN')}</span></div></div>
+            <CouponInput subtotal={actualPrice} roomId={roomId} onApply={onCouponApply} disabled={applyDisabled} />
+            <p className="mt-3 text-xs leading-5 text-[#837269]">A coupon replaces the room discount and is calculated from the stay subtotal.</p>
+            <button onClick={handleBooking} disabled={bookingLoading} className="awadh-button mt-6 w-full px-5 py-3.5 text-base">{bookingLoading ? 'Confirming your booking…' : 'Confirm booking'}</button>
+            <p className="mt-4 flex gap-2 text-xs leading-5 text-[#716158]"><ShieldCheck className="h-4 w-4 shrink-0 text-[#a54528]" />Review your booking details before confirming.</p>
+          </aside>
+        </div>
+
+        <BookingSuccessModal booking={bookingResult} room={room} userEmail={user?.email} open={showBookingModal} onClose={() => setShowBookingModal(false)} onGoToBookings={() => { setShowBookingModal(false); router.push('/my-bookings'); }} />
       </div>
-
-      {/* Booking Success Modal */}
-      <BookingSuccessModal
-        booking={bookingResult}
-        room={room}
-        userEmail={user?.email}
-        open={showBookingModal}
-        onClose={handleCloseModal}
-        onGoToBookings={handleGoToBookings}
-      />
     </div>
   );
 }

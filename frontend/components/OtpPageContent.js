@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
+import AuthShell from '@/components/AuthShell';
 
 export default function OtpPageContent() {
   const searchParams = useSearchParams();
@@ -27,6 +29,7 @@ export default function OtpPageContent() {
       }
 
       toast.success('OTP verified successfully ✅');
+      sessionStorage.setItem('signupToken', data.signupToken);
       router.push(`/signup/name?email=${encodeURIComponent(email)}`);
     } catch (err) {
       console.error(err);
@@ -37,6 +40,22 @@ export default function OtpPageContent() {
   }
 
   return (
+    <>
+      <AuthShell
+        step={1}
+        title="Check your inbox"
+        description={<>We sent a six-digit verification code to <strong>{email || 'your email address'}</strong>.</>}
+        footer={<>Used a different email? <Link href="/signup/email" className="auth-link">Start again</Link></>}
+      >
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="signup-otp">Verification code</label>
+            <input id="signup-otp" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" value={otp} onChange={(event) => setOtp(event.target.value)} required className="auth-input auth-code" />
+          </div>
+          <button type="submit" disabled={loading} className="awadh-button auth-submit">{loading ? 'Verifying…' : 'Verify email'}</button>
+        </form>
+      </AuthShell>
+      {false && (
     <div
       className="flex-1 flex items-center justify-center bg-cover bg-center relative h-screen"
       style={{ backgroundImage: "url('/bed.jpg')" }}
@@ -70,5 +89,7 @@ export default function OtpPageContent() {
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 }

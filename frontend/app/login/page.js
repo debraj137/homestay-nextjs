@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import Link from 'next/link';
+import AuthShell from '@/components/AuthShell';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,6 +44,31 @@ export default function LoginPage() {
   }
 
   return (
+    <>
+      <AuthShell
+        title="Welcome back"
+        description="Sign in to manage your bookings, saved stays, and travel plans."
+        footer={<>
+          New to Awadh Hotels? <Link className="auth-link" href="/signup/email">Create a guest account</Link>
+          <br />
+          List a homestay? <Link className="auth-link" href="/owner-signup">Register as an owner</Link>
+        </>}
+      >
+        {message && <p className="auth-message" role="alert">{message}</p>}
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="auth-field">
+            <label htmlFor="login-email">Email address</label>
+            <input id="login-email" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required className="auth-input" />
+          </div>
+          <div className="auth-field">
+            <label htmlFor="login-password">Password</label>
+            <input id="login-password" type="password" autoComplete="current-password" placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} required className="auth-input" />
+          </div>
+          <div className="text-right"><Link href="/forgot-password" className="auth-link text-sm">Forgot password?</Link></div>
+          <button type="submit" className="awadh-button auth-submit">Sign in</button>
+        </form>
+      </AuthShell>
+      {false && (
     <div
       className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-cover bg-center relative"
       style={{
@@ -134,6 +161,8 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+      )}
+    </>
   );
 }
 
