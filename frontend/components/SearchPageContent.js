@@ -73,18 +73,38 @@ function RoomCard({
       ? discountedPrice / 4
       : discountedPrice / 4 + (discountedPrice / 12) * (hours - 3);
 
+  // function handleBookNow() {
+  //   const hasGuestInfo = Boolean(adults) && children !== null;
+  //   const hasSelection =
+  //     bookingType === "hourly"
+  //       ? Boolean(checkInDate) && hours > 0 && hasGuestInfo
+  //       : Boolean(checkInDate && checkOutDate) && hasGuestInfo;
+  //   if (!hasSelection) {
+  //     onBookNow(room);
+  //     return;
+  //   }
+  //   window.location.href = `/checkout?roomId=${room._id}&${queryString.slice(1)}`;
+  // }
+
   function handleBookNow() {
-    const hasGuestInfo = Boolean(adults) && children !== null;
-    const hasSelection =
-      bookingType === "hourly"
-        ? Boolean(checkInDate) && hours > 0 && hasGuestInfo
-        : Boolean(checkInDate && checkOutDate) && hasGuestInfo;
-    if (!hasSelection) {
-      onBookNow(room);
-      return;
-    }
-    window.location.href = `/checkout?roomId=${room._id}&${queryString.slice(1)}`;
+  // Always open BookingModal for Hourly Stay
+  if (bookingType === 'hourly') {
+    onBookNow(room);
+    return;
   }
+
+  // Keep existing Full Stay behaviour unchanged
+  const hasGuestInfo = Boolean(adults) && children !== null;
+  const hasSelection =
+    Boolean(checkInDate && checkOutDate) && hasGuestInfo;
+
+  if (!hasSelection) {
+    onBookNow(room);
+    return;
+  }
+
+  window.location.href = `/checkout?roomId=${room._id}&${queryString.slice(1)}`;
+}
 
   return (
     <article className="group overflow-hidden rounded-[1.5rem] border border-[#e8dbcd] bg-white transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(63,36,21,.13)] md:grid md:grid-cols-[300px_minmax(0,1fr)]">
